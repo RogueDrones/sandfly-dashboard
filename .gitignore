@@ -1,0 +1,14 @@
+# API keys — never commit real credentials
+config.js
+
+# Development/archive
+_archive/
+__pycache__/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+*.swp

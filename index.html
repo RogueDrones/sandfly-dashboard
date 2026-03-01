@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Phil's Traps - Real-Time Dashboard</title>
+  <script src="https://api.mapbox.com/mapbox-gl-js/v3.0.1/mapbox-gl.js"></script>
+  <link href="https://api.mapbox.com/mapbox-gl-js/v3.0.1/mapbox-gl.css" rel="stylesheet"/>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link rel="stylesheet" href="styles.css"/>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎯</text></svg>">
+</head>
+<body>
+  <div class="container">
+    <!-- Enhanced Header with Filters -->
+    <header class="dashboard-header">
+      <div class="header-content">
+        <div class="project-info">
+          <h1>🎯 Trapping Dashboard</h1>
+          <p class="project-subtitle">Real-time monitoring for DOC 250 traps</p>
+        </div>
+
+        <!-- Filter Controls -->
+        <div class="filter-controls">
+          <div class="filter-group">
+            <label for="projectFilter">📁 Project:</label>
+            <select id="projectFilter" class="filter-select">
+              <option value="all">All Projects</option>
+            </select>
+          </div>
+          <div class="filter-group">
+            <label for="traplineFilter">📍 Trapline:</label>
+            <select id="traplineFilter" class="filter-select">
+              <option value="all">All Traplines</option>
+            </select>
+          </div>
+          <button id="clearFilters" class="clear-filters-btn">🔄 Reset</button>
+        </div>
+
+        <div class="header-stats">
+          <div class="stat-card">
+            <span class="stat-number" id="totalTraps">-</span>
+            <span class="stat-label">Total Traps</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-number" id="recentChecks">-</span>
+            <span class="stat-label">Checked This Week</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-number" id="totalCatches">-</span>
+            <span class="stat-label">Total Catches</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-number" id="lastUpdate">-</span>
+            <span class="stat-label">Last Update</span>
+          </div>
+        </div>
+        <button id="refreshBtn" class="refresh-btn">🔄 Refresh Data</button>
+      </div>
+    </header>
+
+    <!-- Filter Status Bar -->
+    <div id="filterStatus" class="filter-status" style="display: none;"></div>
+
+    <!-- Main -->
+    <main class="dashboard-main">
+      <!-- Map -->
+      <section class="map-section">
+        <div class="section-header">
+          <h2>🗺️ Live Trap Locations</h2>
+          <div class="map-controls">
+            <button id="fitBounds" class="map-btn">🗺️ Fit All</button>
+            <button id="toggleSatellite" class="map-btn">🛰️ Satellite</button>
+          </div>
+        </div>
+        <div class="map-container">
+          <div id="map" class="map"></div>
+          <div class="map-legend">
+            <div class="legend-item"><span class="legend-color" style="background:#27ae60;"></span><span>Recently Checked (≤7d)</span></div>
+            <div class="legend-item"><span class="legend-color" style="background:#f39c12;"></span><span>Needs Attention (8–14d)</span></div>
+            <div class="legend-item"><span class="legend-color" style="background:#e74c3c;"></span><span>Overdue (>14d)</span></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Analytics -->
+      <div class="analytics-grid">
+        <!-- Monthly Catch Trends -->
+        <section class="analytics-card">
+          <h3>📈 Monthly Catch Trends (last 12 months)</h3>
+          <canvas id="catchTrendsChart" width="400" height="200"></canvas>
+        </section>
+
+        <!-- Top Performers -->
+        <section class="analytics-card">
+          <h3>🏆 Top Performing Traps</h3>
+          <div class="top-performers" id="topPerformers">
+            <div class="loading">Analyzing trap performance...</div>
+          </div>
+        </section>
+
+        <!-- Worst Performers -->
+        <section class="analytics-card">
+          <h3>🚩 Worst Performing Traps</h3>
+          <div class="top-performers" id="worstPerformers">
+            <div class="loading">Scanning for underperformers...</div>
+          </div>
+        </section>
+
+        <!-- Last Notes -->
+        <section class="analytics-card">
+            <h3>📝 Last Notes (per trap)</h3>
+            <div id="lastNotes">
+                <div class="loading">Preparing notes…</div>
+            </div>
+        </section>
+      </div>
+
+      <!-- Reports -->
+      <section class="reports-section">
+        <div class="section-header">
+          <h2>📋 Detailed Reports</h2>
+          <div class="report-controls">
+            <select id="reportPeriod">
+              <option value="7">Last 7 Days</option>
+              <option value="30">Last 30 Days</option>
+              <option value="90">Last 90 Days</option>
+              <option value="365">Last Year</option>
+            </select>
+            <button id="exportBtn" class="export-btn">📊 Export Report</button>
+          </div>
+        </div>
+        <div class="reports-grid">
+          <div class="report-card">
+            <h4>Trap Details</h4>
+            <div class="table-container">
+              <table id="trapsTable">
+                <thead>
+                  <tr>
+                    <th>Code</th>
+                    <th>Project</th>
+                    <th>Trapline</th>
+                    <th>Type</th>
+                    <th>Last Check</th>
+                    <th>Days Ago</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="trapsTableBody">
+                  <tr><td colspan="8" class="loading">Loading trap data...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- Status Bar -->
+    <footer class="status-bar">
+      <div class="status-info">
+        <span id="connectionStatus">🔗 Connected to TrapNZ API</span>
+        <span id="dataStatus">📊 Data loaded successfully</span>
+      </div>
+      <div class="api-info">
+        <span>API: TrapNZ WFS | Map: Mapbox GL</span>
+      </div>
+    </footer>
+  </div>
+
+  <!-- Trap Modal -->
+  <div id="trapModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 id="modalTrapTitle">Trap Details</h3>
+        <button class="close-btn" id="closeModal">&times;</button>
+      </div>
+      <div class="modal-body" id="modalTrapContent"></div>
+    </div>
+  </div>
+
+  <script src="config.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
