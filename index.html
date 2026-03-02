@@ -94,17 +94,29 @@
           <canvas id="catchTrendsChart" width="400" height="220"></canvas>
         </section>
 
-        <!-- 12-month performers (side by side under the monthly chart) -->
+        <!-- 12-month performers + species + activity -->
         <section class="analytics-card">
-          <h3>🏆 Top Traps — Last 12 Months</h3>
+          <h3>🏆 Top Traps — 12 Months</h3>
           <div class="top-performers" id="topPerformers12mo">
             <div class="loading">Analyzing trap performance...</div>
           </div>
         </section>
         <section class="analytics-card">
-          <h3>🚩 Underperforming — Last 12 Months</h3>
+          <h3>🚩 Worst Traps — 12 Months</h3>
           <div class="top-performers" id="worstPerformers12mo">
             <div class="loading">Scanning for underperformers...</div>
+          </div>
+        </section>
+        <section class="analytics-card">
+          <h3>🐀 Species Caught — 12 Months</h3>
+          <div class="top-performers" id="species12mo">
+            <div class="loading">Tallying species...</div>
+          </div>
+        </section>
+        <section class="analytics-card">
+          <h3>✅ Check Activity — 12 Months</h3>
+          <div id="checkActivity12mo">
+            <div class="loading">Calculating activity...</div>
           </div>
         </section>
 
@@ -114,7 +126,7 @@
           <canvas id="annualCatchChart" width="400" height="220"></canvas>
         </section>
 
-        <!-- All-time performers (side by side under the annual chart) -->
+        <!-- All-time performers + species + trap type -->
         <section class="analytics-card">
           <h3>🏆 Top Traps — All Time</h3>
           <div class="top-performers" id="topPerformersAllTime">
@@ -127,12 +139,30 @@
             <div class="loading">Scanning for underperformers...</div>
           </div>
         </section>
+        <section class="analytics-card">
+          <h3>🐀 Species Caught — All Time</h3>
+          <div class="top-performers" id="speciesAllTime">
+            <div class="loading">Tallying species...</div>
+          </div>
+        </section>
+        <section class="analytics-card">
+          <h3>🪤 Trap Type Performance</h3>
+          <div class="top-performers" id="trapTypePerf">
+            <div class="loading">Comparing trap types...</div>
+          </div>
+        </section>
 
-        <!-- Last Notes — full width at bottom -->
-        <section class="analytics-card analytics-card--wide">
+        <!-- Last Notes (half width) + Overdue Traps (half width) -->
+        <section class="analytics-card analytics-card--half">
           <h3>📝 Last Notes (per trap)</h3>
           <div id="lastNotes">
             <div class="loading">Preparing notes…</div>
+          </div>
+        </section>
+        <section class="analytics-card analytics-card--half">
+          <h3>⚠️ Overdue Traps (&gt;14 days)</h3>
+          <div class="top-performers" id="overdueTraps">
+            <div class="loading">Checking overdue traps...</div>
           </div>
         </section>
 

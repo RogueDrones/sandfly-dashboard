@@ -250,7 +250,7 @@ body {
 
 .map-container {
     position: relative;
-    height: 500px;
+    height: 1000px;
     border-radius: 10px;
     overflow: hidden;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
@@ -296,6 +296,29 @@ body {
 
 .analytics-card--wide {
     grid-column: 1 / -1;
+}
+
+.analytics-card--half {
+    grid-column: span 2;
+}
+
+/* All-time row: make cards flex columns so inner content can fill height */
+.analytics-card:has(#topPerformersAllTime),
+.analytics-card:has(#worstPerformersAllTime),
+.analytics-card:has(#speciesAllTime),
+.analytics-card:has(#trapTypePerf) {
+    display: flex;
+    flex-direction: column;
+}
+
+#topPerformersAllTime,
+#worstPerformersAllTime,
+#speciesAllTime,
+#trapTypePerf {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
 }
 
 .analytics-card {
@@ -405,6 +428,60 @@ body {
     border-radius: 8px;
     min-width: 48px;
     text-align: center;
+}
+
+/* Check Activity card */
+.activity-stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-top: 5px;
+}
+
+.activity-stat {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 12px;
+    text-align: center;
+}
+
+.activity-stat-number {
+    display: block;
+    font-size: 1.6em;
+    font-weight: 700;
+    color: #2c3e50;
+    line-height: 1;
+}
+
+.activity-stat-label {
+    font-size: 0.78em;
+    color: #7f8c8d;
+    margin-top: 4px;
+    display: block;
+}
+
+/* Species & overdue rows reuse .performer-item */
+.species-bar-bg {
+    flex: 1;
+    height: 6px;
+    background: #ecf0f1;
+    border-radius: 3px;
+    margin: 0 10px;
+    overflow: hidden;
+}
+
+.species-bar-fill {
+    height: 100%;
+    border-radius: 3px;
+    background: linear-gradient(90deg, #3498db, #2980b9);
+}
+
+.species-count {
+    font-weight: 700;
+    color: #2c3e50;
+    min-width: 28px;
+    text-align: right;
+    font-size: 0.95em;
 }
 
 /* Last Notes Panel */
@@ -870,7 +947,7 @@ tr:hover {
     }
     
     .map-container {
-        height: 400px;
+        height: 600px;
     }
     
     .analytics-grid {

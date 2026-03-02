@@ -514,8 +514,13 @@ function updateAnalytics() {
   drawAnnualCatchChart();
   drawTopPerformers12mo();
   drawWorstPerformers12mo();
+  drawSpeciesBreakdown('species12mo', last12MonthCutoff());
+  drawCheckActivity12mo();
   drawTopPerformersAllTime();
   drawWorstPerformersAllTime();
+  drawSpeciesBreakdown('speciesAllTime', null);
+  drawTrapTypePerformance();
+  drawOverdueTraps();
   updateLastNotesPanel();
 }
 
@@ -714,7 +719,7 @@ function renderPerformersList(containerId, items, emptyMsg) {
     : `<div class="loading">${escapeHtml(emptyMsg)}</div>`;
 }
 
-function buildRankedList(records, minChecks, order) {
+function buildRankedList(records, minChecks, order, limit = 5) {
   const { catches, checks } = calcPerformerStats(records);
   return Array.from(checks.entries())
     .filter(([, c]) => c >= minChecks)
@@ -723,30 +728,219 @@ function buildRankedList(records, minChecks, order) {
       return { name: getTrapName(id), catches: caught, checks: c, rate: Math.round(caught / c * 100) };
     })
     .sort(order)
-    .slice(0, 5);
+    .slice(0, limit);
+}
+
+/* Shared cutoff helper */
+function last12MonthCutoff() {
+  return last12MonthBuckets()[0].start;
+}
+
+/* ---- Species breakdown ---- */
+function drawSpeciesBreakdown(containerId, cutoff) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+
+  const tally = new Map();
+  for (const r of STATE.records) {
+    if (!isCatch(r)) continue;
+    if (cutoff && new Date(r.properties.record_date) < cutoff) continue;
+    const sp = (r.properties.species_caught || '').trim();
+    tally.set(sp, (tally.get(sp) || 0) + 1);
+  }
+
+  if (!tally.size) {
+    container.innerHTML = '<div class="loading">No catches recorded</div>';
+    return;
+  }
+
+  const sorted = Array.from(tally.entries()).sort(([, a], [, b]) => b - a);
+  const max = sorted[0][1];
+
+  container.innerHTML = sorted.map(([sp, n]) => `
+    <div class="performer-item">
+      <div class="performer-info">
+        <div class="performer-name">${escapeHtml(sp)}</div>
+      </div>
+      <div class="species-bar-bg">
+        <div class="species-bar-fill" style="width:${Math.round(n / max * 100)}%;"></div>
+      </div>
+      <div class="species-count">${n}</div>
+    </div>`).join('');
+}
+
+/* ---- Check activity (12 months) ---- */
+function drawCheckActivity12mo() {
+  const container = document.getElementById('checkActivity12mo');
+  if (!container) return;
+
+  const cutoff = last12MonthCutoff();
+  const period = STATE.records.filter(r => new Date(r.properties.record_date) >= cutoff);
+
+  const totalChecks = period.length;
+  const totalTraps  = STATE.traps.length;
+  const checkedIds  = new Set(period.map(r => r.properties?.trap_id).filter(Boolean));
+  const pctVisited  = totalTraps ? Math.round(checkedIds.size / totalTraps * 100) : 0;
+  const avgChecks   = totalTraps ? (totalChecks / totalTraps).toFixed(1) : '0';
+
+  // Most active month in the period
+  const byMonth = new Map();
+  for (const r of period) {
+    const key = r.properties.record_date?.slice(0, 7);
+    if (key) byMonth.set(key, (byMonth.get(key) || 0) + 1);
+  }
+  let busiestLabel = '—', busiestCount = 0;
+  for (const [key, count] of byMonth) {
+    if (count > busiestCount) {
+      busiestCount = count;
+      const [yr, mo] = key.split('-');
+      busiestLabel = new Date(+yr, +mo - 1, 1).toLocaleDateString('en-NZ', { month: 'short', year: 'numeric' });
+    }
+  }
+
+  container.innerHTML = `
+    <div class="activity-stats">
+      <div class="activity-stat">
+        <span class="activity-stat-number">${totalChecks}</span>
+        <span class="activity-stat-label">Total checks</span>
+      </div>
+      <div class="activity-stat">
+        <span class="activity-stat-number">${pctVisited}%</span>
+        <span class="activity-stat-label">Traps visited</span>
+      </div>
+      <div class="activity-stat">
+        <span class="activity-stat-number">${avgChecks}</span>
+        <span class="activity-stat-label">Avg checks / trap</span>
+      </div>
+      <div class="activity-stat">
+        <span class="activity-stat-number" style="font-size:1.1em;">${busiestLabel}</span>
+        <span class="activity-stat-label">Busiest month (${busiestCount} checks)</span>
+      </div>
+    </div>`;
+}
+
+/* ---- Trap type performance ---- */
+function drawTrapTypePerformance() {
+  const container = document.getElementById('trapTypePerf');
+  if (!container) return;
+
+  // Map trap_id → trap_type
+  const typeByTrap = new Map();
+  for (const t of STATE.traps) {
+    const id   = t.properties?.trap_id;
+    const type = (t.properties?.trap_type || 'Unknown').trim();
+    if (id) typeByTrap.set(id, type);
+  }
+
+  const catchesByType = new Map();
+  const checksByType  = new Map();
+  for (const r of STATE.records) {
+    const id   = r.properties?.trap_id;
+    const type = typeByTrap.get(id) || 'Unknown';
+    checksByType.set(type, (checksByType.get(type) || 0) + 1);
+    if (isCatch(r)) catchesByType.set(type, (catchesByType.get(type) || 0) + 1);
+  }
+
+  const rows = Array.from(checksByType.entries())
+    .filter(([, c]) => c >= 5)
+    .map(([type, checks]) => {
+      const caught = catchesByType.get(type) || 0;
+      const rate   = Math.round(caught / checks * 100);
+      return { type, caught, checks, rate };
+    })
+    .sort((a, b) => b.rate - a.rate);
+
+  if (!rows.length) {
+    container.innerHTML = '<div class="loading">Not enough data yet</div>';
+    return;
+  }
+
+  container.innerHTML = rows.map(row => `
+    <div class="performer-item">
+      <div class="performer-info">
+        <div class="performer-name">${escapeHtml(row.type)}</div>
+        <div class="performer-location">${row.caught} catches · ${row.checks} checks</div>
+      </div>
+      <div class="performer-rate-badge" style="background:${rateColor(row.rate)};">${row.rate}%</div>
+    </div>`).join('');
+}
+
+/* ---- Overdue traps ---- */
+function drawOverdueTraps() {
+  const container = document.getElementById('overdueTraps');
+  if (!container) return;
+
+  const newestByTrap = new Map();
+  for (const r of STATE.records) {
+    const id = r.properties?.trap_id;
+    const d  = r.properties?.record_date;
+    if (!id || !d) continue;
+    const prev = newestByTrap.get(id);
+    if (!prev || d > prev) newestByTrap.set(id, d);
+  }
+
+  function isRetired(props) {
+    const status = (props?.status || props?.trap_status || '').toLowerCase();
+    if (status.includes('retired') || status.includes('removed')) return true;
+    const code = (props?.code || '').toLowerCase();
+    if (code.includes('(retired)') || code.includes('(removed)')) return true;
+    return false;
+  }
+
+  const overdue = STATE.traps
+    .filter(t => !isRetired(t.properties))
+    .map(t => {
+      const id   = t.properties?.trap_id;
+      const last = newestByTrap.get(id);
+      const days = last
+        ? Math.floor((Date.now() - new Date(last).getTime()) / 86400000)
+        : Infinity;
+      return { name: t.properties?.code || id, days, last };
+    })
+    .filter(t => isFinite(t.days) && t.days > 14)   // exclude never-checked
+    .sort((a, b) => b.days - a.days)
+    .slice(0, 12);
+
+  if (!overdue.length) {
+    container.innerHTML = '<div class="loading" style="color:#27ae60;">✅ All traps checked within 14 days</div>';
+    return;
+  }
+
+  container.innerHTML = overdue.map(t => {
+    const daysLabel = `${t.days}d ago`;
+    const color     = t.days > 30 ? '#e74c3c' : '#f39c12';
+    return `
+      <div class="performer-item">
+        <div class="performer-info">
+          <div class="performer-name">Trap ${escapeHtml(t.name)}</div>
+          <div class="performer-location">${t.last ? `Last: ${new Date(t.last).toLocaleDateString('en-NZ')}` : 'No record'}</div>
+        </div>
+        <div class="performer-rate-badge" style="background:${color};">${daysLabel}</div>
+      </div>`;
+  }).join('');
 }
 
 function drawTopPerformers12mo() {
   const cutoff = last12MonthBuckets()[0].start;
   const period = STATE.records.filter(r => new Date(r.properties.record_date) >= cutoff);
-  const items = buildRankedList(period, 2, (a, b) => b.rate - a.rate || b.catches - a.catches);
+  const items = buildRankedList(period, 2, (a, b) => b.rate - a.rate || b.catches - a.catches, 9);
   renderPerformersList('topPerformers12mo', items, 'Need ≥2 checks per trap to rank');
 }
 
 function drawWorstPerformers12mo() {
   const cutoff = last12MonthBuckets()[0].start;
   const period = STATE.records.filter(r => new Date(r.properties.record_date) >= cutoff);
-  const items = buildRankedList(period, 3, (a, b) => a.rate - b.rate || a.catches - b.catches);
+  const items = buildRankedList(period, 3, (a, b) => a.rate - b.rate || a.catches - b.catches, 9);
   renderPerformersList('worstPerformers12mo', items, 'Need ≥3 checks per trap to rank');
 }
 
 function drawTopPerformersAllTime() {
-  const items = buildRankedList(STATE.records, 3, (a, b) => b.rate - a.rate || b.catches - a.catches);
+  const items = buildRankedList(STATE.records, 3, (a, b) => b.rate - a.rate || b.catches - a.catches, 13);
   renderPerformersList('topPerformersAllTime', items, 'Need ≥3 checks per trap to rank');
 }
 
 function drawWorstPerformersAllTime() {
-  const items = buildRankedList(STATE.records, 5, (a, b) => a.rate - b.rate || a.catches - b.catches);
+  const items = buildRankedList(STATE.records, 5, (a, b) => a.rate - b.rate || a.catches - b.catches, 13);
   renderPerformersList('worstPerformersAllTime', items, 'Need ≥5 checks per trap to rank');
 }
 
