@@ -152,6 +152,9 @@ function setupEventListeners() {
     if (m) m.style.display = 'none';
   });
 
+  const exportBtn = document.getElementById('exportBtn');
+  if (exportBtn) exportBtn.addEventListener('click', exportReport);
+
   const sizeCanvases = () => {
     const ids = ['catchTrendsChart'];
     ids.forEach(id => {
@@ -972,6 +975,66 @@ function showTrapDetails(trapId) {
     </div>
   `;
   modal.style.display = 'block';
+}
+
+/* ----------------------------- EXPORT REPORT ----------------------------- */
+function exportReport() {
+  if (!STATE.traps.length) {
+    alert('No trap data to export yet — wait for data to load.');
+    return;
+  }
+
+  const newestByTrap = new Map();
+  for (const r of STATE.allRecords) {
+    const id = r?.properties?.trap_id;
+    const d = r?.properties?.record_date;
+    if (!id || !d) continue;
+    const prev = newestByTrap.get(id);
+    if (!prev || new Date(d) > new Date(prev)) newestByTrap.set(id, d);
+  }
+
+  const catchesByTrap = new Map();
+  for (const r of STATE.allRecords) {
+    const id = r?.properties?.trap_id;
+    if (!id || !isCatch(r)) continue;
+    catchesByTrap.set(id, (catchesByTrap.get(id) || 0) + 1);
+  }
+
+  const esc = v => `"${String(v ?? '').replace(/"/g, '""')}"`;
+
+  const headers = ['Code', 'Project', 'Trapline', 'Type', 'Last Check', 'Days Ago', 'Status', 'Total Catches'];
+
+  const rows = STATE.traps.map(trap => {
+    const props = trap.properties || {};
+    const lastDate = newestByTrap.get(props.trap_id);
+    const daysSince = lastDate
+      ? Math.floor((Date.now() - new Date(lastDate).getTime()) / 86400000)
+      : null;
+
+    let status = 'Overdue';
+    if (daysSince !== null && daysSince <= 7) status = 'Recent';
+    else if (daysSince !== null && daysSince <= 14) status = 'Warning';
+
+    return [
+      props.code || props.trap_id,
+      getProject(props),
+      getTrapline(props),
+      props.trap_type || '',
+      lastDate ? new Date(lastDate).toLocaleDateString('en-NZ') : 'Never',
+      daysSince !== null ? daysSince : 'N/A',
+      status,
+      catchesByTrap.get(props.trap_id) || 0,
+    ].map(esc).join(',');
+  });
+
+  const csv = [headers.map(esc).join(','), ...rows].join('\n');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `trap-report_${new Date().toISOString().slice(0, 10)}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
 }
 
 /* ---------------------------- GLOBAL EXPORTS ----------------------------- */
