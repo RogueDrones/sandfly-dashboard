@@ -12,29 +12,13 @@
 </head>
 <body>
   <div class="container">
-    <!-- Enhanced Header with Filters -->
+    <!-- Header -->
     <header class="dashboard-header">
-      <div class="header-content">
+      <!-- Row 1: title | stat cards | refresh -->
+      <div class="header-top">
         <div class="project-info">
           <h1>🎯 Trapping Dashboard</h1>
-          <p class="project-subtitle">Real-time monitoring for DOC 250 traps</p>
-        </div>
-
-        <!-- Filter Controls -->
-        <div class="filter-controls">
-          <div class="filter-group">
-            <label for="projectFilter">📁 Project:</label>
-            <select id="projectFilter" class="filter-select">
-              <option value="all">All Projects</option>
-            </select>
-          </div>
-          <div class="filter-group">
-            <label for="traplineFilter">📍 Trapline:</label>
-            <select id="traplineFilter" class="filter-select">
-              <option value="all">All Traplines</option>
-            </select>
-          </div>
-          <button id="clearFilters" class="clear-filters-btn">🔄 Reset</button>
+          <p class="project-subtitle">Real-time Monitoring</p>
         </div>
 
         <div class="header-stats">
@@ -55,7 +39,25 @@
             <span class="stat-label">Last Update</span>
           </div>
         </div>
-        <button id="refreshBtn" class="refresh-btn">🔄 Refresh Data</button>
+
+        <button id="refreshBtn" class="refresh-btn">🔄 Refresh</button>
+      </div>
+
+      <!-- Row 2: filters -->
+      <div class="filter-controls">
+        <div class="filter-group">
+          <label for="projectFilter">📁 Project:</label>
+          <select id="projectFilter" class="filter-select">
+            <option value="all">All Projects</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label for="traplineFilter">📍 Trapline:</label>
+          <select id="traplineFilter" class="filter-select">
+            <option value="all">All Traplines</option>
+          </select>
+        </div>
+        <button id="clearFilters" class="clear-filters-btn">🔄 Reset</button>
       </div>
     </header>
 
