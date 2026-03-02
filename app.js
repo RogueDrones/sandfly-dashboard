@@ -59,7 +59,19 @@ const STATE = {
       query: '',
       sort: 'date_desc',
       items: [],
-    }
+    },
+    traplineSum: {
+      page: 1,
+      perPage: 12,
+      items: [],
+    },
+    checkLog: {
+      page: 1,
+      perPage: 25,
+      period: '30',
+      trapline: 'all',
+      filtered: [],
+    },
   }
 }
 
@@ -153,8 +165,22 @@ function setupEventListeners() {
     if (m) m.style.display = 'none';
   });
 
-  const exportBtn = document.getElementById('exportBtn');
-  if (exportBtn) exportBtn.addEventListener('click', exportReport);
+  const logPeriod = document.getElementById('logPeriod');
+  if (logPeriod) logPeriod.addEventListener('change', e => {
+    STATE.ui.checkLog.period = e.target.value;
+    STATE.ui.checkLog.page = 1;
+    renderCheckRecordLog();
+  });
+
+  const logTrapline = document.getElementById('logTrapline');
+  if (logTrapline) logTrapline.addEventListener('change', e => {
+    STATE.ui.checkLog.trapline = e.target.value;
+    STATE.ui.checkLog.page = 1;
+    renderCheckRecordLog();
+  });
+
+  const logExport = document.getElementById('logExport');
+  if (logExport) logExport.addEventListener('click', exportCheckLog);
 
   const sizeCanvases = () => {
     const ids = ['catchTrendsChart', 'annualCatchChart'];
@@ -343,7 +369,8 @@ function updateUI() {
   updateHeaderStats();
   updateMapData();
   updateAnalytics();
-  updateReportsTable();
+  drawTraplineSummary();
+  drawCheckRecordLog();
 }
 
 async function loadTrapsData() {
@@ -1135,56 +1162,262 @@ function renderLastNotesPanel() {
 }
 
 /* ----------------------------- REPORTS TABLE ----------------------------- */
-function updateReportsTable() {
-  const tableBody = document.getElementById('trapsTableBody');
-  if (!tableBody) return;
+/* ========================= DETAILED REPORTS ========================= */
 
-  const newestByTrap = new Map();
-  for (const r of STATE.records) {
-    const id = r?.properties?.trap_id;
-    const d = r?.properties?.record_date;
-    if (!id || !d) continue;
-    const prev = newestByTrap.get(id);
-    if (!prev || new Date(d) > new Date(prev)) newestByTrap.set(id, d);
+/* Shared trap-meta lookup: trap_id → { name, trapline, project } */
+function buildTrapMeta() {
+  const map = new Map();
+  for (const t of STATE.traps) {
+    const id = t.properties?.trap_id;
+    if (!id) continue;
+    map.set(id, {
+      name:     t.properties?.code || id,
+      trapline: getTrapline(t.properties),
+      project:  getProject(t.properties),
+    });
+  }
+  return map;
+}
+
+/* ---- Trapline Summary ---- */
+function drawTraplineSummary() {
+  const trapMeta = buildTrapMeta();
+
+  // Aggregate per trapline
+  const byLine = new Map();
+  for (const t of STATE.traps) {
+    const id   = t.properties?.trap_id;
+    const meta = trapMeta.get(id);
+    if (!meta) continue;
+    if (!byLine.has(meta.trapline)) {
+      byLine.set(meta.trapline, { project: meta.project, trapIds: new Set(), checks: 0, catches: 0, lastCheck: null });
+    }
+    byLine.get(meta.trapline).trapIds.add(id);
   }
 
-  const rows = STATE.traps.map(trap => {
-    const props = trap.properties || {};
-    const lastDate = newestByTrap.get(props.trap_id);
-    const daysSinceCheck = lastDate
-      ? Math.floor((Date.now() - new Date(lastDate).getTime()) / 86400000)
-      : 999;
+  // Count checks / catches; track newest check per trap for overdue
+  const newestByTrap = new Map();
+  for (const r of STATE.records) {
+    const id   = r.properties?.trap_id;
+    const d    = r.properties?.record_date;
+    const meta = trapMeta.get(id);
+    if (!id || !d || !meta) continue;
+    const entry = byLine.get(meta.trapline);
+    if (!entry) continue;
+    entry.checks++;
+    if (isCatch(r)) entry.catches++;
+    if (!entry.lastCheck || d > entry.lastCheck) entry.lastCheck = d;
+    const prev = newestByTrap.get(id);
+    if (!prev || d > prev) newestByTrap.set(id, d);
+  }
 
-    let statusClass = 'status-overdue';
-    let statusText = 'Overdue';
-    if (daysSinceCheck <= 7) {
-      statusClass = 'status-recent';
-      statusText = 'Recent';
-    } else if (daysSinceCheck <= 14) {
-      statusClass = 'status-warning';
-      statusText = 'Warning';
-    }
+  // Overdue count per trapline
+  const overdueCounts = new Map();
+  for (const t of STATE.traps) {
+    const id   = t.properties?.trap_id;
+    const meta = trapMeta.get(id);
+    if (!meta) continue;
+    const last = newestByTrap.get(id);
+    const days = last ? Math.floor((Date.now() - new Date(last).getTime()) / 86400000) : Infinity;
+    if (days > 14) overdueCounts.set(meta.trapline, (overdueCounts.get(meta.trapline) || 0) + 1);
+  }
 
-    const project = getProject(props);
-    const trapline = getTrapline(props);
+  const items = Array.from(byLine.entries()).map(([line, d]) => ({
+    line,
+    project:   d.project,
+    traps:     d.trapIds.size,
+    checks:    d.checks,
+    catches:   d.catches,
+    rate:      d.checks > 0 ? Math.round(d.catches / d.checks * 100) : 0,
+    overdue:   overdueCounts.get(line) || 0,
+    lastCheck: d.lastCheck,
+  })).sort((a, b) => a.project.localeCompare(b.project) || a.line.localeCompare(b.line));
 
-    return `
-      <tr>
-        <td>${escapeHtml(props.code || props.trap_id)}</td>
-        <td>${escapeHtml(project)}</td>
-        <td>${escapeHtml(trapline)}</td>
-        <td>${escapeHtml(props.trap_type || '—')}</td>
-        <td>${lastDate ? new Date(lastDate).toLocaleDateString('en-NZ') : 'Never'}</td>
-        <td>${isFinite(daysSinceCheck) && daysSinceCheck < 999 ? daysSinceCheck : 'N/A'}</td>
-        <td><span class="status-badge ${statusClass}">${statusText}</span></td>
-        <td><button class="action-btn" onclick="showTrapDetails('${String(props.trap_id).replace(/'/g, "\\'")}')">View</button></td>
-      </tr>
-    `;
+  STATE.ui.traplineSum.items = items;
+  STATE.ui.traplineSum.page  = 1;
+  renderTraplineSummary();
+}
+
+function renderTraplineSummary() {
+  const container = document.getElementById('traplineSummary');
+  if (!container) return;
+
+  const st    = STATE.ui.traplineSum;
+  const total = st.items.length;
+  const pages = Math.max(1, Math.ceil(total / st.perPage));
+  const page  = Math.min(st.page, pages);
+  const slice = st.items.slice((page - 1) * st.perPage, page * st.perPage);
+
+  const rows = slice.map(t => `
+    <tr class="summary-row" data-trapline="${escapeHtml(t.line)}" title="Click to filter log">
+      <td>${escapeHtml(t.line)}</td>
+      <td>${escapeHtml(t.project)}</td>
+      <td>${t.traps}</td>
+      <td>${t.checks}</td>
+      <td>${t.catches}</td>
+      <td><span class="rate-pill" style="background:${rateColor(t.rate)}">${t.rate}%</span></td>
+      <td class="${t.overdue > 0 ? 'overdue-cell' : 'ok-cell'}">${t.overdue > 0 ? `⚠️ ${t.overdue}` : '✅ 0'}</td>
+      <td>${t.lastCheck ? new Date(t.lastCheck).toLocaleDateString('en-NZ') : '—'}</td>
+    </tr>`).join('');
+
+  container.innerHTML = `
+    <table class="report-table">
+      <thead><tr>
+        <th>Trapline</th><th>Project</th><th>Traps</th>
+        <th>Checks</th><th>Catches</th><th>Rate</th>
+        <th>Overdue</th><th>Last Check</th>
+      </tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+    <div class="report-pager">
+      <button id="ts-prev" class="page-btn" ${page <= 1 ? 'disabled' : ''}>Prev</button>
+      <span class="pager-text">Page ${page} of ${pages} · ${total} traplines</span>
+      <button id="ts-next" class="page-btn" ${page >= pages ? 'disabled' : ''}>Next</button>
+    </div>`;
+
+  // Click row → filter the log to that trapline
+  container.querySelectorAll('.summary-row').forEach(row => {
+    row.addEventListener('click', () => {
+      const line = row.dataset.trapline;
+      STATE.ui.checkLog.trapline = line;
+      STATE.ui.checkLog.page    = 1;
+      const sel = document.getElementById('logTrapline');
+      if (sel) sel.value = line;
+      renderCheckRecordLog();
+    });
   });
 
-  tableBody.innerHTML = rows.length
-    ? rows.join('')
-    : '<tr><td colspan="8" class="loading">No traps match current filters</td></tr>';
+  document.getElementById('ts-prev').onclick = () => {
+    STATE.ui.traplineSum.page = Math.max(1, page - 1);
+    renderTraplineSummary();
+  };
+  document.getElementById('ts-next').onclick = () => {
+    STATE.ui.traplineSum.page = Math.min(pages, page + 1);
+    renderTraplineSummary();
+  };
+}
+
+/* ---- Check Record Log ---- */
+function drawCheckRecordLog() {
+  STATE._trapMeta = buildTrapMeta();
+
+  // Populate trapline dropdown
+  const sel = document.getElementById('logTrapline');
+  if (sel) {
+    const cur = sel.value;
+    sel.innerHTML = '<option value="all">All Traplines</option>';
+    Array.from(STATE.availableTraplines).sort().forEach(line => {
+      const o = document.createElement('option');
+      o.value = line; o.textContent = line;
+      sel.appendChild(o);
+    });
+    if (STATE.availableTraplines.has(cur)) sel.value = cur;
+  }
+
+  STATE.ui.checkLog.page = 1;
+  renderCheckRecordLog();
+}
+
+function renderCheckRecordLog() {
+  const container = document.getElementById('checkRecordLog');
+  if (!container) return;
+
+  const st      = STATE.ui.checkLog;
+  const meta    = STATE._trapMeta || new Map();
+  const cutoff  = st.period !== 'all'
+    ? new Date(Date.now() - Number(st.period) * 86400000)
+    : null;
+
+  const filtered = STATE.records
+    .filter(r => {
+      const d = r.properties?.record_date;
+      if (!d) return false;
+      if (cutoff && new Date(d) < cutoff) return false;
+      if (st.trapline !== 'all') {
+        const m = meta.get(r.properties?.trap_id);
+        if (!m || m.trapline !== st.trapline) return false;
+      }
+      return true;
+    })
+    .sort((a, b) => (b.properties.record_date || '').localeCompare(a.properties.record_date || ''));
+
+  STATE.ui.checkLog.filtered = filtered;
+
+  const total  = filtered.length;
+  const pages  = Math.max(1, Math.ceil(total / st.perPage));
+  const page   = Math.min(st.page, pages);
+  const slice  = filtered.slice((page - 1) * st.perPage, page * st.perPage);
+
+  const rows = slice.map(r => {
+    const p     = r.properties || {};
+    const m     = meta.get(p.trap_id) || { name: p.trap_id, trapline: '—' };
+    const catch_ = isCatch(r);
+    return `
+      <tr>
+        <td>${p.record_date ? new Date(p.record_date).toLocaleDateString('en-NZ') : '—'}</td>
+        <td>${escapeHtml(m.name)}</td>
+        <td>${escapeHtml(m.trapline)}</td>
+        <td class="${catch_ ? 'result-catch' : 'result-clear'}">${catch_ ? '🎯 Catch' : '✅ Clear'}</td>
+        <td>${catch_ ? escapeHtml(p.species_caught) : '—'}</td>
+        <td class="notes-cell">${p.record_notes ? escapeHtml(p.record_notes) : ''}</td>
+      </tr>`;
+  }).join('');
+
+  container.innerHTML = `
+    <table class="report-table">
+      <thead><tr>
+        <th>Date</th><th>Trap</th><th>Trapline</th>
+        <th>Result</th><th>Species</th><th>Notes</th>
+      </tr></thead>
+      <tbody>${rows || '<tr><td colspan="6" style="text-align:center;color:#7f8c8d;padding:20px;">No records match current filters</td></tr>'}</tbody>
+    </table>
+    <div class="report-pager">
+      <button id="cl-prev" class="page-btn" ${page <= 1 ? 'disabled' : ''}>Prev</button>
+      <span class="pager-text">Page ${page} of ${pages} · ${total} records</span>
+      <button id="cl-next" class="page-btn" ${page >= pages ? 'disabled' : ''}>Next</button>
+    </div>`;
+
+  document.getElementById('cl-prev').onclick = () => {
+    STATE.ui.checkLog.page = Math.max(1, page - 1);
+    renderCheckRecordLog();
+  };
+  document.getElementById('cl-next').onclick = () => {
+    STATE.ui.checkLog.page = Math.min(pages, page + 1);
+    renderCheckRecordLog();
+  };
+}
+
+/* ---- Export check log CSV ---- */
+function exportCheckLog() {
+  const filtered = STATE.ui.checkLog.filtered;
+  if (!filtered?.length) {
+    alert('No records to export — adjust filters and try again.');
+    return;
+  }
+  const meta = STATE._trapMeta || new Map();
+  const esc  = v => `"${String(v ?? '').replace(/"/g, '""')}"`;
+  const headers = ['Date', 'Trap', 'Trapline', 'Project', 'Result', 'Species', 'Notes'];
+  const rows = filtered.map(r => {
+    const p = r.properties || {};
+    const m = meta.get(p.trap_id) || { name: p.trap_id, trapline: '—', project: '—' };
+    return [
+      p.record_date ? new Date(p.record_date).toLocaleDateString('en-NZ') : '',
+      m.name,
+      m.trapline,
+      m.project,
+      isCatch(r) ? 'Catch' : 'Clear',
+      (p.species_caught && p.species_caught !== 'None') ? p.species_caught : '',
+      p.record_notes || '',
+    ].map(esc).join(',');
+  });
+  const csv  = [headers.map(esc).join(','), ...rows].join('\n');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href = url;
+  a.download = `check-log_${new Date().toISOString().slice(0, 10)}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
 }
 
 /* ----------------------------- TRAP MODAL -------------------------------- */
@@ -1245,65 +1478,6 @@ function showTrapDetails(trapId) {
   modal.style.display = 'block';
 }
 
-/* ----------------------------- EXPORT REPORT ----------------------------- */
-function exportReport() {
-  if (!STATE.traps.length) {
-    alert('No trap data to export yet — wait for data to load.');
-    return;
-  }
-
-  const newestByTrap = new Map();
-  for (const r of STATE.allRecords) {
-    const id = r?.properties?.trap_id;
-    const d = r?.properties?.record_date;
-    if (!id || !d) continue;
-    const prev = newestByTrap.get(id);
-    if (!prev || new Date(d) > new Date(prev)) newestByTrap.set(id, d);
-  }
-
-  const catchesByTrap = new Map();
-  for (const r of STATE.allRecords) {
-    const id = r?.properties?.trap_id;
-    if (!id || !isCatch(r)) continue;
-    catchesByTrap.set(id, (catchesByTrap.get(id) || 0) + 1);
-  }
-
-  const esc = v => `"${String(v ?? '').replace(/"/g, '""')}"`;
-
-  const headers = ['Code', 'Project', 'Trapline', 'Type', 'Last Check', 'Days Ago', 'Status', 'Total Catches'];
-
-  const rows = STATE.traps.map(trap => {
-    const props = trap.properties || {};
-    const lastDate = newestByTrap.get(props.trap_id);
-    const daysSince = lastDate
-      ? Math.floor((Date.now() - new Date(lastDate).getTime()) / 86400000)
-      : null;
-
-    let status = 'Overdue';
-    if (daysSince !== null && daysSince <= 7) status = 'Recent';
-    else if (daysSince !== null && daysSince <= 14) status = 'Warning';
-
-    return [
-      props.code || props.trap_id,
-      getProject(props),
-      getTrapline(props),
-      props.trap_type || '',
-      lastDate ? new Date(lastDate).toLocaleDateString('en-NZ') : 'Never',
-      daysSince !== null ? daysSince : 'N/A',
-      status,
-      catchesByTrap.get(props.trap_id) || 0,
-    ].map(esc).join(',');
-  });
-
-  const csv = [headers.map(esc).join(','), ...rows].join('\n');
-  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `trap-report_${new Date().toISOString().slice(0, 10)}.csv`;
-  a.click();
-  URL.revokeObjectURL(url);
-}
 
 /* ---------------------------- GLOBAL EXPORTS ----------------------------- */
 window.showTrapDetails = showTrapDetails;

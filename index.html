@@ -168,43 +168,41 @@
 
       </div>
 
-      <!-- Reports -->
+      <!-- Detailed Reports -->
       <section class="reports-section">
-        <div class="section-header">
-          <h2>📋 Detailed Reports</h2>
-          <div class="report-controls">
-            <select id="reportPeriod">
-              <option value="7">Last 7 Days</option>
-              <option value="30">Last 30 Days</option>
-              <option value="90">Last 90 Days</option>
-              <option value="365">Last Year</option>
-            </select>
-            <button id="exportBtn" class="export-btn">📊 Export Report</button>
-          </div>
-        </div>
-        <div class="reports-grid">
-          <div class="report-card">
-            <h4>Trap Details</h4>
-            <div class="table-container">
-              <table id="trapsTable">
-                <thead>
-                  <tr>
-                    <th>Code</th>
-                    <th>Project</th>
-                    <th>Trapline</th>
-                    <th>Type</th>
-                    <th>Last Check</th>
-                    <th>Days Ago</th>
-                    <th>Status</th>
-                    <th>Actions</th>
-                  </tr>
-                </thead>
-                <tbody id="trapsTableBody">
-                  <tr><td colspan="8" class="loading">Loading trap data...</td></tr>
-                </tbody>
-              </table>
+        <div class="reports-layout">
+
+          <!-- Left: Trapline Summary -->
+          <div class="report-panel">
+            <h3>📍 Trapline Summary</h3>
+            <div id="traplineSummary">
+              <div class="loading">Loading traplines...</div>
             </div>
           </div>
+
+          <!-- Right: Check Record Log -->
+          <div class="report-panel">
+            <div class="log-header">
+              <h3>📋 Check Record Log</h3>
+              <div class="log-controls">
+                <select id="logPeriod">
+                  <option value="7">Last 7 days</option>
+                  <option value="30" selected>Last 30 days</option>
+                  <option value="90">Last 90 days</option>
+                  <option value="365">Last year</option>
+                  <option value="all">All time</option>
+                </select>
+                <select id="logTrapline">
+                  <option value="all">All Traplines</option>
+                </select>
+                <button id="logExport" class="export-btn">⬇️ Export CSV</button>
+              </div>
+            </div>
+            <div id="checkRecordLog">
+              <div class="loading">Loading records...</div>
+            </div>
+          </div>
+
         </div>
       </section>
     </main>
