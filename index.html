@@ -87,10 +87,25 @@
 
       <!-- Analytics -->
       <div class="analytics-grid">
+
         <!-- Monthly Catch Trends -->
         <section class="analytics-card analytics-card--wide">
           <h3>📊 Monthly Catch Trends (last 12 months)</h3>
           <canvas id="catchTrendsChart" width="400" height="220"></canvas>
+        </section>
+
+        <!-- 12-month performers (side by side under the monthly chart) -->
+        <section class="analytics-card">
+          <h3>🏆 Top Traps — Last 12 Months</h3>
+          <div class="top-performers" id="topPerformers12mo">
+            <div class="loading">Analyzing trap performance...</div>
+          </div>
+        </section>
+        <section class="analytics-card">
+          <h3>🚩 Underperforming — Last 12 Months</h3>
+          <div class="top-performers" id="worstPerformers12mo">
+            <div class="loading">Scanning for underperformers...</div>
+          </div>
         </section>
 
         <!-- Annual Catch Trends -->
@@ -99,29 +114,28 @@
           <canvas id="annualCatchChart" width="400" height="220"></canvas>
         </section>
 
-        <!-- Top Performers -->
+        <!-- All-time performers (side by side under the annual chart) -->
         <section class="analytics-card">
-          <h3>🏆 Top Performing Traps</h3>
-          <div class="top-performers" id="topPerformers">
+          <h3>🏆 Top Traps — All Time</h3>
+          <div class="top-performers" id="topPerformersAllTime">
             <div class="loading">Analyzing trap performance...</div>
           </div>
         </section>
-
-        <!-- Worst Performers -->
         <section class="analytics-card">
-          <h3>🚩 Worst Performing Traps</h3>
-          <div class="top-performers" id="worstPerformers">
+          <h3>🚩 Underperforming — All Time</h3>
+          <div class="top-performers" id="worstPerformersAllTime">
             <div class="loading">Scanning for underperformers...</div>
           </div>
         </section>
 
-        <!-- Last Notes -->
-        <section class="analytics-card">
-            <h3>📝 Last Notes (per trap)</h3>
-            <div id="lastNotes">
-                <div class="loading">Preparing notes…</div>
-            </div>
+        <!-- Last Notes — full width at bottom -->
+        <section class="analytics-card analytics-card--wide">
+          <h3>📝 Last Notes (per trap)</h3>
+          <div id="lastNotes">
+            <div class="loading">Preparing notes…</div>
+          </div>
         </section>
+
       </div>
 
       <!-- Reports -->

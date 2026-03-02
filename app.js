@@ -361,7 +361,7 @@ async function loadTrapsData() {
 }
 
 async function loadRecordsData() {
-  const url = `${CONFIG.WFS_BASE}?service=WFS&request=GetFeature&typeName=trapnz-projects:my-projects-trap-records&outputFormat=application/json&maxFeatures=5000`;
+  const url = `${CONFIG.WFS_BASE}?service=WFS&request=GetFeature&typeName=trapnz-projects:my-projects-trap-records&outputFormat=application/json&maxFeatures=50000`;
   try {
     const data = await fetchJsonUtf8(url);
     STATE.allRecords = Array.isArray(data.features) ? data.features : [];
@@ -512,8 +512,10 @@ function updateAnalytics() {
 
   drawMonthlyCatchTrendsChart();
   drawAnnualCatchChart();
-  drawTopPerformersList();
-  drawWorstPerformersList();
+  drawTopPerformers12mo();
+  drawWorstPerformers12mo();
+  drawTopPerformersAllTime();
+  drawWorstPerformersAllTime();
   updateLastNotesPanel();
 }
 
@@ -675,96 +677,77 @@ function drawAnnualCatchChart() {
   });
 }
 
-function drawTopPerformersList() {
-  const container = document.getElementById('topPerformers');
-  if (!container) return;
+/* ---- Performer helpers ---- */
 
-  const buckets = last12MonthBuckets();
-  const startCutoff = buckets[0].start;
-
-  const countsByTrap = new Map();
-  for (const r of STATE.records) {
-    if (!isCatch(r)) continue;
-    const dt = new Date(r.properties.record_date);
-    if (dt < startCutoff) continue;
-    const id = r.properties.trap_id;
-    countsByTrap.set(id, (countsByTrap.get(id) || 0) + 1);
+/* Tally catches and total checks from a set of records */
+function calcPerformerStats(records) {
+  const catches = new Map();
+  const checks = new Map();
+  for (const r of records) {
+    const id = r.properties?.trap_id;
+    if (!id) continue;
+    checks.set(id, (checks.get(id) || 0) + 1);
+    if (isCatch(r)) catches.set(id, (catches.get(id) || 0) + 1);
   }
-
-  const top = Array.from(countsByTrap.entries())
-    .sort(([, a], [, b]) => b - a)
-    .slice(0, 5)
-    .map(([trapId, count]) => ({
-      name: getTrapName(trapId),
-      count
-    }));
-
-  container.innerHTML = top.length
-    ? top.map((t, i) => `
-      <div class="performer-item">
-        <div class="performer-rank">#${i + 1}</div>
-        <div class="performer-info">
-          <div class="performer-name">Trap ${escapeHtml(t.name)}</div>
-        </div>
-        <div class="performer-stats">
-          <div class="catch-count">${t.count}</div>
-          <div class="catch-rate">catches</div>
-        </div>
-      </div>`).join('')
-    : '<div class="loading">No catches recorded in the last 12 months</div>';
+  return { catches, checks };
 }
 
-function drawWorstPerformersList() {
-  const container = document.getElementById('worstPerformers');
+function rateColor(pct) {
+  if (pct >= 30) return '#27ae60';
+  if (pct >= 10) return '#f39c12';
+  return '#e74c3c';
+}
+
+function renderPerformersList(containerId, items, emptyMsg) {
+  const container = document.getElementById(containerId);
   if (!container) return;
+  container.innerHTML = items.length
+    ? items.map((t, i) => `
+        <div class="performer-item">
+          <div class="performer-rank">#${i + 1}</div>
+          <div class="performer-info">
+            <div class="performer-name">Trap ${escapeHtml(t.name)}</div>
+            <div class="performer-location">${t.catches} catches · ${t.checks} checks</div>
+          </div>
+          <div class="performer-rate-badge" style="background:${rateColor(t.rate)};">${t.rate}%</div>
+        </div>`).join('')
+    : `<div class="loading">${escapeHtml(emptyMsg)}</div>`;
+}
 
-  const buckets = last12MonthBuckets();
-  const startCutoff = buckets[0].start;
-
-  const countsByTrap = new Map();
-  for (const t of STATE.traps) countsByTrap.set(t.properties.trap_id, 0);
-
-  for (const r of STATE.records) {
-    if (!isCatch(r)) continue;
-    const dt = new Date(r.properties.record_date);
-    if (dt < startCutoff) continue;
-    const id = r.properties.trap_id;
-    countsByTrap.set(id, (countsByTrap.get(id) || 0) + 1);
-  }
-
-  const lastCatchByTrap = new Map();
-  for (const r of STATE.records) {
-    if (!isCatch(r)) continue;
-    const id = r.properties.trap_id;
-    const d = new Date(r.properties.record_date);
-    const prev = lastCatchByTrap.get(id);
-    if (!prev || d > prev) lastCatchByTrap.set(id, d);
-  }
-
-  const all = Array.from(countsByTrap.entries()).map(([trapId, count]) => {
-    const lastCatch = lastCatchByTrap.get(trapId);
-    const daysSince = lastCatch ? Math.floor((Date.now() - lastCatch.getTime()) / 86400000) : Infinity;
-    return { trapId, name: getTrapName(trapId), count, lastCatch, daysSince };
-  });
-
-  const worst = all
-    .sort((a, b) => (a.count - b.count) || (b.daysSince - a.daysSince))
+function buildRankedList(records, minChecks, order) {
+  const { catches, checks } = calcPerformerStats(records);
+  return Array.from(checks.entries())
+    .filter(([, c]) => c >= minChecks)
+    .map(([id, c]) => {
+      const caught = catches.get(id) || 0;
+      return { name: getTrapName(id), catches: caught, checks: c, rate: Math.round(caught / c * 100) };
+    })
+    .sort(order)
     .slice(0, 5);
+}
 
-  container.innerHTML = worst.map(w => `
-    <div class="performer-item">
-      <div class="performer-rank">#</div>
-      <div class="performer-info">
-        <div class="performer-name">Trap ${escapeHtml(w.name)}</div>
-        <div class="performer-location" style="color:#7f8c8d;">
-          ${w.lastCatch ? `Last catch: ${w.lastCatch.toLocaleDateString('en-NZ')}` : 'No catches on record'}
-        </div>
-      </div>
-      <div class="performer-stats">
-        <div class="catch-count">${w.count}</div>
-        <div class="catch-rate">last 12 mo</div>
-      </div>
-    </div>`).join('');
+function drawTopPerformers12mo() {
+  const cutoff = last12MonthBuckets()[0].start;
+  const period = STATE.records.filter(r => new Date(r.properties.record_date) >= cutoff);
+  const items = buildRankedList(period, 2, (a, b) => b.rate - a.rate || b.catches - a.catches);
+  renderPerformersList('topPerformers12mo', items, 'Need ≥2 checks per trap to rank');
+}
+
+function drawWorstPerformers12mo() {
+  const cutoff = last12MonthBuckets()[0].start;
+  const period = STATE.records.filter(r => new Date(r.properties.record_date) >= cutoff);
+  const items = buildRankedList(period, 3, (a, b) => a.rate - b.rate || a.catches - b.catches);
+  renderPerformersList('worstPerformers12mo', items, 'Need ≥3 checks per trap to rank');
+}
+
+function drawTopPerformersAllTime() {
+  const items = buildRankedList(STATE.records, 3, (a, b) => b.rate - a.rate || b.catches - a.catches);
+  renderPerformersList('topPerformersAllTime', items, 'Need ≥3 checks per trap to rank');
+}
+
+function drawWorstPerformersAllTime() {
+  const items = buildRankedList(STATE.records, 5, (a, b) => a.rate - b.rate || a.catches - b.catches);
+  renderPerformersList('worstPerformersAllTime', items, 'Need ≥5 checks per trap to rank');
 }
 
 /* ----------------------------- LAST NOTES -------------------------------- */

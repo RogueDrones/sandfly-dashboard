@@ -396,19 +396,15 @@ body {
     color: #7f8c8d;
 }
 
-.performer-stats {
-    text-align: right;
-}
-
-.catch-count {
-    font-size: 1.2em;
+.performer-rate-badge {
+    flex-shrink: 0;
+    color: white;
     font-weight: 700;
-    color: #27ae60;
-}
-
-.catch-rate {
-    font-size: 0.8em;
-    color: #95a5a6;
+    font-size: 0.95em;
+    padding: 6px 10px;
+    border-radius: 8px;
+    min-width: 48px;
+    text-align: center;
 }
 
 /* Last Notes Panel */
