@@ -42,6 +42,7 @@ const STATE = {
   markers: [],
   charts: {
     catchTrends: null,
+    annualTrends: null,
   },
 
   fp: {
@@ -156,7 +157,7 @@ function setupEventListeners() {
   if (exportBtn) exportBtn.addEventListener('click', exportReport);
 
   const sizeCanvases = () => {
-    const ids = ['catchTrendsChart'];
+    const ids = ['catchTrendsChart', 'annualCatchChart'];
     ids.forEach(id => {
       const c = document.getElementById(id);
       if (!c) return;
@@ -510,6 +511,7 @@ function updateAnalytics() {
   STATE.fp.analytics = fp;
 
   drawMonthlyCatchTrendsChart();
+  drawAnnualCatchChart();
   drawTopPerformersList();
   drawWorstPerformersList();
   updateLastNotesPanel();
@@ -539,6 +541,22 @@ function last12MonthBuckets() {
   return out;
 }
 
+/* Linear regression: returns fitted y values for each x index */
+function linearRegressionLine(values) {
+  const n = values.length;
+  if (n < 2) return values.slice();
+  let sumX = 0, sumY = 0, sumXY = 0, sumX2 = 0;
+  for (let i = 0; i < n; i++) {
+    sumX += i; sumY += values[i];
+    sumXY += i * values[i]; sumX2 += i * i;
+  }
+  const denom = n * sumX2 - sumX * sumX;
+  if (denom === 0) return values.map(() => sumY / n);
+  const slope = (n * sumXY - sumX * sumY) / denom;
+  const intercept = (sumY - slope * sumX) / n;
+  return values.map((_, i) => Math.round((slope * i + intercept) * 10) / 10);
+}
+
 function drawMonthlyCatchTrendsChart() {
   const canvas = document.getElementById('catchTrendsChart');
   if (!canvas) return;
@@ -555,31 +573,104 @@ function drawMonthlyCatchTrendsChart() {
     if (!isCatch(r)) continue;
     const dt = new Date(r.properties.record_date);
     for (let i = 0; i < buckets.length; i++) {
-      if (dt >= buckets[i].start && dt < buckets[i].end) {
-        counts[i] += 1;
-        break;
-      }
+      if (dt >= buckets[i].start && dt < buckets[i].end) { counts[i]++; break; }
     }
   }
 
   STATE.charts.catchTrends = new Chart(canvas.getContext('2d'), {
-    type: 'line',
+    type: 'bar',
     data: {
       labels: buckets.map(b => b.label),
-      datasets: [{
-        label: 'Catches / month',
-        data: counts,
-        borderColor: '#3498db',
-        backgroundColor: 'rgba(52, 152, 219, 0.1)',
-        tension: 0.1
-      }]
+      datasets: [
+        {
+          label: 'Catches',
+          data: counts,
+          backgroundColor: 'rgba(52, 152, 219, 0.75)',
+          borderColor: '#2980b9',
+          borderWidth: 1,
+          order: 2,
+        },
+        {
+          label: 'Trend',
+          data: linearRegressionLine(counts),
+          type: 'line',
+          borderColor: '#e74c3c',
+          borderWidth: 2,
+          pointRadius: 0,
+          tension: 0,
+          fill: false,
+          order: 1,
+        }
+      ]
     },
     options: {
       responsive: false,
       maintainAspectRatio: false,
       animation: { duration: 300 },
       plugins: { legend: { display: true, position: 'top' } },
-      scales: { y: { beginAtZero: true, precision: 0 } }
+      scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
+    }
+  });
+}
+
+function drawAnnualCatchChart() {
+  const canvas = document.getElementById('annualCatchChart');
+  if (!canvas) return;
+
+  if (STATE.charts.annualTrends) {
+    STATE.charts.annualTrends.destroy();
+    STATE.charts.annualTrends = null;
+  }
+
+  // Tally catches by calendar year
+  const countsByYear = new Map();
+  for (const r of STATE.records) {
+    if (!isCatch(r)) continue;
+    const yr = new Date(r.properties.record_date).getFullYear();
+    if (!isFinite(yr)) continue;
+    countsByYear.set(yr, (countsByYear.get(yr) || 0) + 1);
+  }
+
+  if (countsByYear.size === 0) {
+    canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
+    return;
+  }
+
+  const years = Array.from(countsByYear.keys()).sort((a, b) => a - b);
+  const counts = years.map(y => countsByYear.get(y));
+
+  STATE.charts.annualTrends = new Chart(canvas.getContext('2d'), {
+    type: 'bar',
+    data: {
+      labels: years.map(String),
+      datasets: [
+        {
+          label: 'Catches',
+          data: counts,
+          backgroundColor: 'rgba(39, 174, 96, 0.75)',
+          borderColor: '#1e8449',
+          borderWidth: 1,
+          order: 2,
+        },
+        {
+          label: 'Trend',
+          data: linearRegressionLine(counts),
+          type: 'line',
+          borderColor: '#e74c3c',
+          borderWidth: 2,
+          pointRadius: 0,
+          tension: 0,
+          fill: false,
+          order: 1,
+        }
+      ]
+    },
+    options: {
+      responsive: false,
+      maintainAspectRatio: false,
+      animation: { duration: 300 },
+      plugins: { legend: { display: true, position: 'top' } },
+      scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
     }
   });
 }

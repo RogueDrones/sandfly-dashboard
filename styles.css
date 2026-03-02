@@ -292,6 +292,10 @@ body {
     gap: 25px;
 }
 
+.analytics-card--wide {
+    grid-column: 1 / -1;
+}
+
 .analytics-card {
     background: rgba(255, 255, 255, 0.95);
     border-radius: 15px;
