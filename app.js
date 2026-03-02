@@ -1110,7 +1110,6 @@ function renderLastNotesPanel() {
       </div>
       <div class="control export-row">
         <div class="export-chooser">
-          <label for="ln-export-which">Export</label>
           <select id="ln-export-which" class="select">
             <option value="visible">Visible page</option>
             <option value="all">All (filtered)</option>
