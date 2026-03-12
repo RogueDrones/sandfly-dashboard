@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<!-- ============================================================
+     login.html — The Sign-In Page
+     ============================================================
+     This is the first page a user sees if they aren't already
+     logged in. The middleware (_middleware.js) redirects anyone
+     without a valid session to this page.
+
+     The page displays a simple, centred login card with:
+       - The dashboard logo and title
+       - An email input field
+       - A password input field
+       - A "Sign In" button
+       - An error message area (hidden until there's an error)
+
+     When the user clicks "Sign In", a small JavaScript block
+     at the bottom of this page sends the credentials to the
+     /api/login endpoint (login.js). If the server says "OK",
+     the browser navigates to the dashboard. If not, an error
+     message appears on the card.
+
+     The ?next= query parameter: if the middleware redirected the
+     user here from another page (e.g. they tried to visit /),
+     the original path is passed as ?next=/. After a successful
+     login, the script redirects to that path so the user ends
+     up exactly where they intended to go.
+     ============================================================ -->
+<html lang="en">
+<head>
+  <!-- Standard character encoding declaration. UTF-8 supports
+       all languages and special characters. Always include this. -->
+  <meta charset="UTF-8" />
+
+  <!-- Makes the page look correct on mobile devices by setting the
+       viewport width to the device width and default zoom to 1x. -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+
+  <title>Sign In — Phil's Traps Dashboard</title>
+
+  <!-- A tiny SVG favicon (the icon shown in the browser tab).
+       Instead of a separate .ico file, this uses a data: URL with
+       an inline SVG that just displays the target emoji. -->
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎯</text></svg>">
+
+  <!-- ============================================================
+       Embedded CSS — styles for the login page only.
+       We put the CSS here (rather than in styles.css) because this
+       page is intentionally minimal and self-contained. Having the
+       styles inline means one fewer network request to load.
+       ============================================================ -->
+  <style>
+    /* Reset box model: every element's width/height includes its
+       padding and border (not just the content). This prevents
+       elements from accidentally overflowing their containers. */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    /* The body takes up the full screen height and uses flexbox
+       to centre the login card both horizontally and vertically.
+       The purple-to-violet gradient background matches the main
+       dashboard for a consistent look. */
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;    /* Fill the whole screen vertically */
+      display: flex;
+      align-items: center;      /* Centre vertically */
+      justify-content: center;  /* Centre horizontally */
+      padding: 20px;            /* Small gap on very small screens */
+    }
+
+    /* The white card that contains the login form. max-width 400px
+       keeps it from being too wide on large screens. The semi-transparent
+       background and backdrop-filter give a frosted-glass effect. */
+    .login-card {
+      background: rgba(255, 255, 255, 0.97);
+      border-radius: 18px;
+      padding: 40px 44px;
+      width: 100%;
+      max-width: 400px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);  /* Deep shadow for depth */
+      backdrop-filter: blur(10px);  /* Blurs the gradient behind the card */
+    }
+
+    /* The logo area at the top of the card — emoji icon + title + subtitle */
+    .logo {
+      text-align: center;
+      margin-bottom: 28px;
+    }
+
+    /* The large emoji icon displayed above the title */
+    .logo-icon {
+      font-size: 3rem;
+      display: block;      /* Makes the span take its own line */
+      margin-bottom: 8px;
+    }
+
+    /* The main heading inside the logo area */
+    .logo h1 {
+      font-size: 1.5rem;
+      color: #2c3e50;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    /* The smaller subtitle text below the heading */
+    .logo p {
+      color: #7f8c8d;  /* Grey — visually less important */
+      font-size: 0.9rem;
+    }
+
+    /* Each label + input pair is wrapped in a .form-group for consistent spacing */
+    .form-group {
+      margin-bottom: 18px;
+    }
+
+    /* The text labels above each input field (EMAIL, PASSWORD) */
+    label {
+      display: block;           /* Takes its own line above the input */
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #555;
+      margin-bottom: 6px;
+      text-transform: uppercase;   /* Makes labels all-caps */
+      letter-spacing: 0.04em;      /* Slight spacing between letters for readability */
+    }
+
+    /* The text input fields for email and password */
+    input {
+      width: 100%;              /* Fill the full card width */
+      padding: 12px 14px;
+      border: 2px solid #e0e0e0;
+      border-radius: 10px;
+      font-size: 1rem;
+      font-family: inherit;     /* Use the same font as the rest of the page */
+      color: #2c3e50;
+      transition: border-color 0.2s, box-shadow 0.2s;  /* Smooth focus animation */
+      background: #fafafa;      /* Very light grey background */
+    }
+
+    /* When the user clicks into an input field, highlight it with
+       a blue border and a soft glow ring to show it is active */
+    input:focus {
+      outline: none;            /* Remove default browser outline */
+      border-color: #667eea;    /* Purple highlight matching the page background */
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.15);  /* Soft glow around the field */
+      background: #fff;         /* Switch to pure white when focused */
+    }
+
+    /* The main "Sign In" submit button — takes the full card width */
+    .btn-login {
+      width: 100%;
+      padding: 13px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);  /* Matches page bg */
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      font-size: 1rem;
+      font-weight: 700;
+      font-family: inherit;
+      cursor: pointer;
+      margin-top: 8px;
+      transition: opacity 0.2s, transform 0.1s;
+      letter-spacing: 0.02em;
+    }
+
+    /* Slight transparency on hover — gives a pressed/clickable feel */
+    .btn-login:hover  { opacity: 0.92; }
+
+    /* Slightly shrinks the button while it's being clicked */
+    .btn-login:active { transform: scale(0.98); }
+
+    /* When the button is disabled (while sign-in is in progress),
+       make it look greyed out and prevent clicking */
+    .btn-login:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;  /* Don't animate a disabled button */
+    }
+
+    /* The error message box that appears below the button when login fails.
+       It is hidden by default using display: none. */
+    .error-msg {
+      display: none;        /* Hidden until .visible class is added by JavaScript */
+      margin-top: 16px;
+      padding: 11px 14px;
+      background: #fdecea;  /* Light red background */
+      border: 1px solid #f5c6c2;
+      border-radius: 8px;
+      color: #c0392b;       /* Dark red text */
+      font-size: 0.9rem;
+      text-align: center;
+    }
+
+    /* JavaScript adds this class to make the error visible */
+    .error-msg.visible { display: block; }
+  </style>
+</head>
+<body>
+  <!-- ============================================================
+       The login card — the only visible element on the page.
+       It is centred by the flexbox styles on <body>.
+       ============================================================ -->
+  <div class="login-card">
+
+    <!-- Logo area: emoji icon, title, and subtitle -->
+    <div class="logo">
+      <span class="logo-icon">🎯</span>
+      <h1>Trapping Dashboard</h1>
+      <p>Sign in to continue</p>
+    </div>
+
+    <!-- The login form.
+         novalidate disables the browser's built-in HTML5 validation
+         so our JavaScript can handle validation and show nicer
+         error messages instead. -->
+    <form id="loginForm" novalidate>
+
+      <!-- Email input group -->
+      <div class="form-group">
+        <label for="email">Email</label>
+        <input
+          type="email"
+          id="email"
+          name="email"
+          placeholder="your@email.com"
+          autocomplete="email"   <!-- Lets the browser auto-fill saved email addresses -->
+          required
+        />
+      </div>
+
+      <!-- Password input group.
+           type="password" makes the browser display dots instead of
+           the actual characters the user types. -->
+      <div class="form-group">
+        <label for="password">Password</label>
+        <input
+          type="password"
+          id="password"
+          name="password"
+          placeholder="••••••••"
+          autocomplete="current-password"  <!-- Lets the browser auto-fill saved passwords -->
+          required
+        />
+      </div>
+
+      <!-- The submit button. JavaScript disables it and changes its
+           text to "Signing in…" while the login request is in flight,
+           to prevent double-submissions. -->
+      <button type="submit" class="btn-login" id="submitBtn">Sign In</button>
+
+      <!-- Error message area. Hidden by default. JavaScript shows it
+           by adding the "visible" class when login fails. -->
+      <div class="error-msg" id="errorMsg"></div>
+    </form>
+  </div>
+
+  <!-- ============================================================
+       Login Form JavaScript
+       This script runs in the browser and handles the form submit
+       event. It sends the credentials to the server using fetch()
+       (a modern browser API for making HTTP requests without
+       reloading the page), then reacts to the server's response.
+       ============================================================ -->
+  <script>
+    // -- Subsection: Get references to DOM elements --
+    // We store references to the form, button, and error div so we
+    // can interact with them throughout the script without searching
+    // the DOM repeatedly.
+    const form      = document.getElementById('loginForm');
+    const submitBtn = document.getElementById('submitBtn');
+    const errorMsg  = document.getElementById('errorMsg');
+
+    // -- Subsection: Read the ?next= redirect destination --
+    // If the middleware redirected the user here from another page,
+    // it added ?next=/that/page to the URL. We read it so we can
+    // send the user back there after a successful login.
+    // If there's no ?next= parameter, default to '/' (the homepage/dashboard).
+    const params   = new URLSearchParams(window.location.search);
+    const nextPath = params.get('next') || '/';
+
+    // -- Subsection: Error display helper functions --
+
+    // showError puts a message into the error box and makes it visible.
+    function showError(msg) {
+      errorMsg.textContent = msg;          // Set the text content of the error div
+      errorMsg.classList.add('visible');   // Add the CSS class that makes it display: block
+    }
+
+    // clearError hides the error box (removes the 'visible' class).
+    function clearError() {
+      errorMsg.classList.remove('visible');
+    }
+
+    // -- Subsection: Form submit handler --
+    // We listen for the 'submit' event on the form. This fires when
+    // the user clicks "Sign In" or presses Enter in an input field.
+    form.addEventListener('submit', async (e) => {
+      // e.preventDefault() stops the browser from doing its default
+      // behaviour (which would reload the page). We handle the
+      // submission ourselves using fetch() below.
+      e.preventDefault();
+      clearError();  // Hide any previous error message
+
+      // Read the current values from the input fields.
+      const email    = document.getElementById('email').value.trim();
+      const password = document.getElementById('password').value;
+      // .trim() removes accidental leading/trailing spaces from the email.
+      // We intentionally do NOT trim the password in case spaces are intentional.
+
+      // Basic client-side validation — make sure both fields are filled in.
+      if (!email || !password) {
+        showError('Please enter your email and password.');
+        return; // Stop here — don't send the request
+      }
+
+      // -- Disable the button to prevent double-submissions --
+      // While we wait for the server to respond, we don't want the
+      // user to click "Sign In" again and send duplicate requests.
+      submitBtn.disabled    = true;
+      submitBtn.textContent = 'Signing in…';
+
+      try {
+        // -- Send the credentials to /api/login --
+        // fetch() makes an HTTP request and returns a Promise — a value
+        // that will resolve in the future. The 'await' keyword pauses
+        // execution here until the response arrives.
+        const res = await fetch('/api/login', {
+          method:  'POST',                             // Use POST (not GET) to send data
+          headers: { 'Content-Type': 'application/json' },  // Tell the server it's JSON
+          body:    JSON.stringify({ email, password }), // Convert the object to a JSON string
+        });
+
+        // Parse the response body as JSON. The server sends
+        // { ok: true } on success or { error: "message" } on failure.
+        const data = await res.json();
+
+        if (res.ok && data.ok) {
+          // -- Success — navigate to the originally requested page --
+          // The server has already set the session cookie. Now we
+          // just redirect the browser. nextPath was read from ?next= above.
+          window.location.href = nextPath;
+        } else {
+          // -- Login failed — show the error and re-enable the button --
+          showError(data.error || 'Sign in failed. Please try again.');
+          submitBtn.disabled    = false;
+          submitBtn.textContent = 'Sign In';
+        }
+      } catch {
+        // -- Network error (e.g. no internet connection) --
+        // The fetch() call itself failed — we never even reached the server.
+        showError('Network error. Please check your connection and try again.');
+        submitBtn.disabled    = false;
+        submitBtn.textContent = 'Sign In';
+      }
+    });
+  </script>
+</body>
+</html>
