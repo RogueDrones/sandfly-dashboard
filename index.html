@@ -1,118 +1,274 @@
 <!DOCTYPE html>
+<!-- ============================================================
+     index.html — The Main Dashboard Page
+     ============================================================
+     This is the primary page of the Sandfly Trapping Dashboard.
+     It is only accessible to logged-in users — the middleware
+     (_middleware.js) will redirect anyone without a valid session
+     to login.html before they ever see this page.
+
+     WHAT THE USER SEES ON THIS PAGE:
+       1. A header with the project title, four live stat cards,
+          a Refresh button, a Sign Out button, and filter dropdowns.
+       2. A blue notification bar that appears when a filter is active.
+       3. A large interactive map (powered by Mapbox) showing every
+          trap as a colour-coded pin.
+       4. An analytics grid with charts, performer tables, species
+          breakdowns, and an overdue traps list.
+       5. A detailed reports section with a trapline summary table
+          and a scrollable check record log.
+       6. A footer status bar showing connection status.
+       7. A pop-up modal that shows individual trap details when
+          a pin or "View Details" button is clicked.
+
+     HOW THIS PAGE CONNECTS TO OTHER FILES:
+       - styles.css     → visual appearance of every element here
+       - config.js      → dynamically injected by functions/config.js.js;
+                          puts the TrapNZ API key and Mapbox token into
+                          window.DASHBOARD_KEYS so app.js can read them
+       - app.js         → loads data from TrapNZ, runs all the charts,
+                          updates the map markers, and wires up every
+                          interactive element on this page
+     ============================================================ -->
 <html lang="en">
 <head>
+  <!-- UTF-8 encoding supports all characters including NZ place names -->
   <meta charset="UTF-8" />
+  <!-- Makes the layout responsive on mobile devices -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Phil's Traps - Real-Time Dashboard</title>
+
+  <!-- ============================================================
+       External Libraries loaded from CDN (Content Delivery Network)
+       CDN means we load these files from the internet rather than
+       hosting them ourselves. This is common for popular libraries.
+       ============================================================ -->
+
+  <!-- Mapbox GL JS — the library that draws and controls the interactive
+       map. Version 3.0.1 is pinned so updates don't break the map. -->
   <script src="https://api.mapbox.com/mapbox-gl-js/v3.0.1/mapbox-gl.js"></script>
+
+  <!-- Mapbox CSS — required styles for the map controls and popups.
+       Without this, the map would look broken. -->
   <link href="https://api.mapbox.com/mapbox-gl-js/v3.0.1/mapbox-gl.css" rel="stylesheet"/>
+
+  <!-- Chart.js — the library that draws the bar and line charts.
+       Loaded from jsDelivr CDN. "npm/chart.js" means the latest version. -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <!-- Our own stylesheet (styles.css) for all dashboard-specific styles -->
   <link rel="stylesheet" href="styles.css"/>
+
+  <!-- A tiny inline SVG favicon (the icon shown in the browser tab).
+       This uses a data: URL so no separate image file is needed. -->
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎯</text></svg>">
 </head>
 <body>
+  <!-- The outer container limits the max width and centres the layout -->
   <div class="container">
-    <!-- Header -->
+
+    <!-- ============================================================
+         HEADER
+         The header sits at the top of every page view. It contains
+         two rows:
+           Row 1: project title on the left, stat cards in the middle,
+                  Refresh and Sign Out buttons on the right.
+           Row 2: project filter and trapline filter dropdowns,
+                  with a Reset button.
+         app.js populates the stat numbers and the filter dropdowns
+         after loading data from TrapNZ.
+         ============================================================ -->
     <header class="dashboard-header">
-      <!-- Row 1: title | stat cards | refresh -->
+
+      <!-- Row 1: title | stat cards | action buttons -->
       <div class="header-top">
+
+        <!-- Project title and subtitle, top-left of the header -->
         <div class="project-info">
           <h1>🎯 Trapping Dashboard</h1>
           <p class="project-subtitle">Real-time Monitoring</p>
         </div>
 
+        <!-- Four stat cards that display live numbers from TrapNZ.
+             app.js updates the text content of each id after data loads. -->
         <div class="header-stats">
+          <!-- Total number of traps loaded from TrapNZ -->
           <div class="stat-card">
             <span class="stat-number" id="totalTraps">-</span>
             <span class="stat-label">Total Traps</span>
           </div>
+          <!-- Number of trap check records in the last 7 days -->
           <div class="stat-card">
             <span class="stat-number" id="recentChecks">-</span>
             <span class="stat-label">Checked This Week</span>
           </div>
+          <!-- Total number of records where a pest was caught -->
           <div class="stat-card">
             <span class="stat-number" id="totalCatches">-</span>
             <span class="stat-label">Total Catches</span>
           </div>
+          <!-- Timestamp of the last time data was refreshed (updated live) -->
           <div class="stat-card">
             <span class="stat-number" id="lastUpdate">-</span>
             <span class="stat-label">Last Update</span>
           </div>
         </div>
 
-        <button id="refreshBtn" class="refresh-btn">🔄 Refresh</button>
+        <!-- Action buttons on the right side of the header -->
+        <div class="header-actions">
+          <!-- Triggers a fresh data load from TrapNZ immediately -->
+          <button id="refreshBtn" class="refresh-btn">🔄 Refresh</button>
+          <!-- Calls /api/logout, clears the session cookie, and
+               redirects to login.html -->
+          <button id="logoutBtn" class="logout-btn" title="Sign out">🔒 Sign Out</button>
+        </div>
       </div>
 
-      <!-- Row 2: filters -->
+      <!-- Row 2: filter dropdowns.
+           These let the user narrow the dashboard to a specific
+           project or trapline. app.js populates the <option> elements
+           after loading trap data. Changing a dropdown triggers
+           applyFilters() in app.js which updates every panel. -->
       <div class="filter-controls">
+        <!-- Project filter: "All Projects" or a specific project name -->
         <div class="filter-group">
           <label for="projectFilter">📁 Project:</label>
           <select id="projectFilter" class="filter-select">
             <option value="all">All Projects</option>
+            <!-- Additional options are added dynamically by app.js -->
           </select>
         </div>
+        <!-- Trapline filter: "All Traplines" or a specific trapline name -->
         <div class="filter-group">
           <label for="traplineFilter">📍 Trapline:</label>
           <select id="traplineFilter" class="filter-select">
             <option value="all">All Traplines</option>
+            <!-- Additional options are added dynamically by app.js -->
           </select>
         </div>
+        <!-- Resets both filters back to "all" -->
         <button id="clearFilters" class="clear-filters-btn">🔄 Reset</button>
       </div>
     </header>
 
-    <!-- Filter Status Bar -->
+    <!-- ============================================================
+         FILTER STATUS BAR
+         This bar only appears when at least one filter is active.
+         It shows which filters are applied and how many traps are
+         currently visible. app.js hides/shows it via style.display.
+         ============================================================ -->
     <div id="filterStatus" class="filter-status" style="display: none;"></div>
 
-    <!-- Main -->
+    <!-- ============================================================
+         MAIN CONTENT AREA
+         Everything the user scrolls through below the header.
+         ============================================================ -->
     <main class="dashboard-main">
-      <!-- Map -->
+
+      <!-- ============================================================
+           MAP SECTION
+           An interactive Mapbox map showing the location of every trap.
+           Each trap is shown as a colour-coded pin:
+             Green  = checked within the last 7 days (healthy)
+             Orange = 8–14 days since last check (needs attention)
+             Red    = more than 14 days since last check (overdue)
+           Clicking a pin opens a small popup with trap details and a
+           "View Details" button that opens the modal below.
+           ============================================================ -->
       <section class="map-section">
+        <!-- Section heading row with title and map control buttons -->
         <div class="section-header">
           <h2>🗺️ Live Trap Locations</h2>
           <div class="map-controls">
+            <!-- Zooms the map to fit all currently visible trap pins -->
             <button id="fitBounds" class="map-btn">🗺️ Fit All</button>
+            <!-- Toggles between satellite imagery and street map view -->
             <button id="toggleSatellite" class="map-btn">🛰️ Satellite</button>
           </div>
         </div>
+
+        <!-- The map container. The <div id="map"> is the target that
+             Mapbox GL JS uses to render the interactive map inside.
+             Its height is set in styles.css. -->
         <div class="map-container">
           <div id="map" class="map"></div>
+
+          <!-- The colour legend overlaid on the bottom-left of the map.
+               Explains what each pin colour means. These are static
+               HTML — they don't change dynamically. -->
           <div class="map-legend">
-            <div class="legend-item"><span class="legend-color" style="background:#27ae60;"></span><span>Recently Checked (≤7d)</span></div>
-            <div class="legend-item"><span class="legend-color" style="background:#f39c12;"></span><span>Needs Attention (8–14d)</span></div>
-            <div class="legend-item"><span class="legend-color" style="background:#e74c3c;"></span><span>Overdue (>14d)</span></div>
+            <div class="legend-item">
+              <span class="legend-color" style="background:#27ae60;"></span>
+              <span>Recently Checked (≤7d)</span>
+            </div>
+            <div class="legend-item">
+              <span class="legend-color" style="background:#f39c12;"></span>
+              <span>Needs Attention (8–14d)</span>
+            </div>
+            <div class="legend-item">
+              <span class="legend-color" style="background:#e74c3c;"></span>
+              <span>Overdue (>14d)</span>
+            </div>
           </div>
         </div>
       </section>
 
-      <!-- Analytics -->
+      <!-- ============================================================
+           ANALYTICS GRID
+           A responsive grid of cards, each showing a different
+           analysis of the trap data. The grid uses CSS Grid to
+           automatically arrange cards side-by-side or stacked
+           depending on screen width.
+           All content inside these cards is generated by app.js
+           after data loads from TrapNZ.
+           ============================================================ -->
       <div class="analytics-grid">
 
-        <!-- Monthly Catch Trends -->
+        <!-- Monthly Catch Trends chart — a bar chart showing how many
+             pests were caught in each of the last 12 months, with a
+             red trend line overlaid. The canvas element is drawn on
+             by Chart.js. The width/height are initial values only —
+             app.js resizes the canvas to fit the card. -->
         <section class="analytics-card analytics-card--wide">
           <h3>📊 Monthly Catch Trends (last 12 months)</h3>
           <canvas id="catchTrendsChart" width="400" height="220"></canvas>
         </section>
 
-        <!-- 12-month performers + species + activity -->
+        <!-- 12-month Top Performers card — shows the traps with the
+             highest catch rates (catches ÷ checks) over the last year.
+             Useful for identifying which traps in your network are
+             catching the most pests. app.js fills the div with HTML. -->
         <section class="analytics-card">
           <h3>🏆 Top Traps — 12 Months</h3>
           <div class="top-performers" id="topPerformers12mo">
             <div class="loading">Analyzing trap performance...</div>
           </div>
         </section>
+
+        <!-- 12-month Worst Performers card — shows the traps with
+             the lowest catch rates. May indicate traps that need
+             maintenance, repositioning, or different bait. -->
         <section class="analytics-card">
           <h3>🚩 Worst Traps — 12 Months</h3>
           <div class="top-performers" id="worstPerformers12mo">
             <div class="loading">Scanning for underperformers...</div>
           </div>
         </section>
+
+        <!-- Species Breakdown (12 months) — lists every pest species
+             caught in the last 12 months with a proportional bar
+             showing how common each species is relative to the others. -->
         <section class="analytics-card">
           <h3>🐀 Species Caught — 12 Months</h3>
           <div class="top-performers" id="species12mo">
             <div class="loading">Tallying species...</div>
           </div>
         </section>
+
+        <!-- Check Activity card — shows summary statistics about
+             how actively the traps are being checked: total checks,
+             percentage of traps visited, average checks per trap,
+             and the busiest month. -->
         <section class="analytics-card">
           <h3>✅ Check Activity — 12 Months</h3>
           <div id="checkActivity12mo">
@@ -120,31 +276,44 @@
           </div>
         </section>
 
-        <!-- Annual Catch Trends -->
+        <!-- Annual Catch Trends chart — same concept as the monthly
+             chart but grouped by calendar year so you can see
+             multi-year trends. Goes back as far as TrapNZ records exist. -->
         <section class="analytics-card analytics-card--wide">
           <h3>📊 Annual Catch Trends (all years)</h3>
           <canvas id="annualCatchChart" width="400" height="220"></canvas>
         </section>
 
-        <!-- All-time performers + species + trap type -->
+        <!-- All-time Top Performers — same as the 12-month version but
+             across ALL records ever, giving the lifetime leaderboard. -->
         <section class="analytics-card">
           <h3>🏆 Top Traps — All Time</h3>
           <div class="top-performers" id="topPerformersAllTime">
             <div class="loading">Analyzing trap performance...</div>
           </div>
         </section>
+
+        <!-- All-time Worst Performers — traps with the lowest catch
+             rates across all recorded history. -->
         <section class="analytics-card">
           <h3>🚩 Underperforming — All Time</h3>
           <div class="top-performers" id="worstPerformersAllTime">
             <div class="loading">Scanning for underperformers...</div>
           </div>
         </section>
+
+        <!-- Species Breakdown (all time) — like the 12-month species
+             list but including every catch ever recorded. -->
         <section class="analytics-card">
           <h3>🐀 Species Caught — All Time</h3>
           <div class="top-performers" id="speciesAllTime">
             <div class="loading">Tallying species...</div>
           </div>
         </section>
+
+        <!-- Trap Type Performance — compares different types of traps
+             (e.g. DOC 200, Timms, Goodnature) by their catch rates.
+             Helps you decide which trap design works best. -->
         <section class="analytics-card">
           <h3>🪤 Trap Type Performance</h3>
           <div class="top-performers" id="trapTypePerf">
@@ -152,14 +321,25 @@
           </div>
         </section>
 
-        <!-- Last Notes (half width) + Overdue Traps (half width) -->
+        <!-- Last Notes panel — shows the most recent field note left
+             by the person who last checked each trap. Includes a
+             search box, sort controls, page size selector, and a
+             CSV export button. Spans two grid columns (half width). -->
         <section class="analytics-card analytics-card--half">
           <h3>📝 Last Notes (per trap)</h3>
+          <!-- app.js renders the search controls and note list into this div -->
           <div id="lastNotes">
             <div class="loading">Preparing notes…</div>
           </div>
         </section>
+
+        <!-- Overdue Traps panel — lists traps that haven't been checked
+             in more than 14 days (not counting retired traps). Sorted
+             by most overdue first. Helps prioritise which traps to visit.
+             Also spans two grid columns (half width). -->
         <section class="analytics-card analytics-card--half">
+          <!-- The &gt; is an HTML entity for the > character. HTML would
+               interpret a bare > as the end of a tag, so we escape it. -->
           <h3>⚠️ Overdue Traps (&gt;14 days)</h3>
           <div class="top-performers" id="overdueTraps">
             <div class="loading">Checking overdue traps...</div>
@@ -167,37 +347,66 @@
         </section>
 
       </div>
+      <!-- End of analytics grid -->
 
-      <!-- Detailed Reports -->
+      <!-- ============================================================
+           DETAILED REPORTS SECTION
+           A two-panel layout below the analytics grid:
+             Left panel  — Trapline Summary table (one row per trapline)
+             Right panel — Check Record Log (every check record, paginated)
+           Both panels are filled by app.js after data loads.
+           ============================================================ -->
       <section class="reports-section">
         <div class="reports-layout">
 
-          <!-- Left: Trapline Summary -->
+          <!-- Left panel: Trapline Summary table.
+               Shows one row per trapline with total traps, total checks,
+               catch rate, overdue count, and last check date.
+               Clicking a row filters the Check Record Log to that trapline. -->
           <div class="report-panel">
             <h3>📍 Trapline Summary</h3>
+            <!-- app.js renders the table and pagination buttons here -->
             <div id="traplineSummary">
               <div class="loading">Loading traplines...</div>
             </div>
           </div>
 
-          <!-- Right: Check Record Log -->
+          <!-- Right panel: Check Record Log.
+               A paginated table of every individual check record, with
+               filters for time period and trapline, plus a CSV export.
+               The log-header contains the title and the filter controls
+               side by side. -->
           <div class="report-panel">
             <div class="log-header">
               <h3>📋 Check Record Log</h3>
+
+              <!-- Controls for the check record log: period filter,
+                   trapline filter, and export button. All three trigger
+                   re-renders of the log table via app.js event listeners. -->
               <div class="log-controls">
+                <!-- Time period filter: show records from the last N days -->
                 <select id="logPeriod">
                   <option value="7">Last 7 days</option>
-                  <option value="30" selected>Last 30 days</option>
+                  <option value="30" selected>Last 30 days</option>  <!-- Default -->
                   <option value="90">Last 90 days</option>
                   <option value="365">Last year</option>
                   <option value="all">All time</option>
                 </select>
+
+                <!-- Trapline filter: narrow the log to one trapline.
+                     app.js populates the options dynamically. -->
                 <select id="logTrapline">
                   <option value="all">All Traplines</option>
+                  <!-- Populated dynamically by app.js after data loads -->
                 </select>
+
+                <!-- Exports the currently filtered records as a CSV file
+                     that can be opened in Excel or Google Sheets -->
                 <button id="logExport" class="export-btn">⬇️ Export CSV</button>
               </div>
             </div>
+
+            <!-- app.js renders the records table and pagination here -->
             <div id="checkRecordLog">
               <div class="loading">Loading records...</div>
             </div>
@@ -205,31 +414,74 @@
 
         </div>
       </section>
-    </main>
+      <!-- End of reports section -->
 
-    <!-- Status Bar -->
+    </main>
+    <!-- End of main content -->
+
+    <!-- ============================================================
+         STATUS BAR (footer)
+         A bar at the very bottom of the page showing the connection
+         status to the TrapNZ API and the last data load status.
+         app.js updates the text in both spans as data loads or fails.
+         ============================================================ -->
     <footer class="status-bar">
       <div class="status-info">
+        <!-- Connection status: "Connected", "Connecting", or "Error" -->
         <span id="connectionStatus">🔗 Connected to TrapNZ API</span>
+        <!-- Data load status: success, loading, or error message -->
         <span id="dataStatus">📊 Data loaded successfully</span>
       </div>
+      <!-- Static text identifying which APIs this dashboard uses -->
       <div class="api-info">
         <span>API: TrapNZ WFS | Map: Mapbox GL</span>
       </div>
     </footer>
-  </div>
 
-  <!-- Trap Modal -->
+  </div>
+  <!-- End of .container -->
+
+  <!-- ============================================================
+       TRAP DETAILS MODAL
+       A pop-up dialog that appears when the user clicks "View Details"
+       on a map pin popup. It shows detailed information about one
+       specific trap, including its last 10 check records.
+
+       The modal is hidden (display: none via CSS) until app.js
+       calls showTrapDetails(trapId), which populates the content
+       and sets display: block.
+
+       The × button (closeModal) hides the modal again.
+       ============================================================ -->
   <div id="trapModal" class="modal">
     <div class="modal-content">
+      <!-- Modal header: trap name on the left, close button on the right -->
       <div class="modal-header">
+        <!-- app.js sets this text to the trap's code/ID -->
         <h3 id="modalTrapTitle">Trap Details</h3>
+        <!-- The × character is an HTML entity for the × symbol -->
         <button class="close-btn" id="closeModal">&times;</button>
       </div>
+      <!-- Modal body: trap info and recent records, all filled by app.js -->
       <div class="modal-body" id="modalTrapContent"></div>
     </div>
   </div>
 
+  <!-- ============================================================
+       Scripts — loaded at the bottom so the HTML above is
+       already parsed before the scripts run.
+
+       Order matters:
+         1. config.js must load FIRST because it sets
+            window.DASHBOARD_KEYS (the API keys).
+         2. app.js reads window.DASHBOARD_KEYS at startup,
+            so it must come AFTER config.js.
+
+       config.js is NOT a static file — it is served by
+       functions/config.js.js, which reads Cloudflare environment
+       variables and injects them into the JavaScript response.
+       This is how API keys stay secret (not in source code).
+       ============================================================ -->
   <script src="config.js"></script>
   <script src="app.js"></script>
 </body>

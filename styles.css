@@ -1,91 +1,176 @@
-/* Sandfly Traps Dashboard Styles - Enhanced with Filtering */
-/* File: C:\Users\HP\Desktop\Claude_Workspace\sandfly-dashboard\styles.css */
+/* ============================================================
+   styles.css — Sandfly Traps Dashboard Stylesheet
+   ============================================================
+   This file controls how every visual element in the dashboard
+   looks: colours, fonts, spacing, layout, animations, and
+   responsive behaviour on smaller screens.
 
-/* Reset and base styles */
+   The dashboard uses a "purple gradient" theme for backgrounds
+   and "clean white cards" for all content panels. The main layout
+   technique used throughout is CSS Flexbox (for rows and small
+   groups of items) and CSS Grid (for the analytics card grid).
+
+   Colour palette used across the site:
+     #2c3e50  — dark navy/charcoal (main text, headings)
+     #3498db  — bright blue (primary buttons, borders, highlights)
+     #2980b9  — darker blue (button hover states)
+     #27ae60  — green (success, "recently checked" status)
+     #f39c12  — amber/orange (warning, "needs attention" status)
+     #e74c3c  — red (error, "overdue" status, danger buttons)
+     #667eea / #764ba2 — purple gradient (body and login background)
+     #7f8c8d / #95a5a6 — grey (secondary text, muted labels)
+
+   File: styles.css
+   ============================================================ */
+
+/* ============================================================
+   GLOBAL RESET AND BASE STYLES
+   These rules apply to every element on the page and establish
+   sensible defaults before any other styles are applied.
+   ============================================================ */
+
+/* The universal selector (*) targets every single HTML element.
+   margin: 0 and padding: 0 remove the browser's default spacing
+   (different browsers have different defaults, so resetting them
+   ensures a consistent look everywhere).
+   box-sizing: border-box means that when you set width: 200px,
+   the element will be exactly 200px wide — padding and border
+   are included inside that measurement rather than added on top. */
 * {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
 }
 
+/* The body is the outermost visible element — everything sits inside it.
+   We give it the purple-to-violet diagonal gradient background that
+   you see behind all the white cards.
+   min-height: 100vh ensures the gradient always covers the full screen
+   height, even if the page content is very short.
+   line-height: 1.6 gives text a bit of breathing room between lines,
+   making it easier to read. */
 body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    min-height: 100vh;
+    min-height: 100vh;   /* vh = viewport height; 100vh = full screen height */
     color: #333;
     line-height: 1.6;
 }
 
+/* The main wrapper that centres all content horizontally and limits
+   how wide the dashboard can get on very large screens.
+   max-width: 1600px prevents the layout from stretching too wide
+   on 4K monitors. margin: 0 auto centres the container by giving
+   equal automatic margins on both left and right.
+   display: flex + flex-direction: column stacks the header,
+   main content, and footer vertically inside the container. */
 .container {
     max-width: 1600px;
-    margin: 0 auto;
+    margin: 0 auto;       /* Centre horizontally */
     padding: 20px;
     min-height: 100vh;
     display: flex;
-    flex-direction: column;
+    flex-direction: column;  /* Stack children top to bottom */
 }
 
-/* Header Styles */
+/* ============================================================
+   HEADER STYLES
+   The header sits at the top of the dashboard and contains the
+   project title, live stat cards, action buttons, and filter
+   dropdowns. It uses two rows (header-top and filter-controls).
+   ============================================================ */
+
+/* The header card itself. The semi-transparent white background
+   with backdrop-filter: blur creates the "frosted glass" effect
+   where you can faintly see the purple gradient behind it.
+   box-shadow adds a soft shadow beneath the card for depth. */
 .dashboard-header {
-    background: rgba(255, 255, 255, 0.95);
+    background: rgba(255, 255, 255, 0.95);  /* 95% opaque white */
     border-radius: 15px;
     padding: 25px;
     margin-bottom: 25px;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-    backdrop-filter: blur(10px);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);  /* x=0, y=8px, blur=32px, black at 10% opacity */
+    backdrop-filter: blur(10px);  /* Blurs whatever is behind the header card */
 }
 
+/* Row 1 of the header: project title | stat cards | buttons.
+   display: flex puts children in a row.
+   align-items: center vertically centres all children.
+   gap: 20px adds space between each child without needing margins. */
 /* Row 1: title | stats | refresh */
 .header-top {
     display: flex;
-    align-items: center;
+    align-items: center;  /* Align all items to the vertical centre */
     gap: 20px;
-    margin-bottom: 15px;
+    margin-bottom: 15px;  /* Space between row 1 and row 2 (filter controls) */
 }
 
+/* The title/subtitle block on the left of row 1.
+   flex: 0 0 auto means it won't grow or shrink — it takes exactly
+   as much space as its content needs, and no more.
+   white-space: nowrap prevents the title from wrapping to a second line. */
 .project-info {
     flex: 0 0 auto;
     white-space: nowrap;
 }
 
+/* The large "🎯 Trapping Dashboard" heading */
 .project-info h1 {
     color: #2c3e50;
-    font-size: 2em;
-    font-weight: 700;
+    font-size: 2em;   /* em units are relative to the parent element's font size */
+    font-weight: 700; /* Bold */
     margin-bottom: 3px;
     white-space: nowrap;
 }
 
+/* The smaller subtitle text below the heading */
 .project-subtitle {
-    color: #7f8c8d;
+    color: #7f8c8d;  /* Muted grey — visually less important than the heading */
     font-size: 1em;
     font-weight: 500;
 }
 
-/* Filter Controls — Row 2 */
+/* ============================================================
+   FILTER CONTROLS — Row 2 of the header
+   The filter area contains the Project and Trapline dropdown
+   selectors plus the Reset button. It sits on its own row
+   below the stat cards.
+   ============================================================ */
+
+/* The filter controls row. flex-wrap: wrap means if the items
+   don't all fit on one line (e.g. on a narrow screen), they
+   wrap onto the next line. The light blue background and border
+   visually separate this row from the stat cards above. */
 .filter-controls {
     display: flex;
     align-items: center;
     gap: 20px;
     flex-wrap: wrap;
-    background: rgba(52, 152, 219, 0.05);
+    background: rgba(52, 152, 219, 0.05);    /* Very faint blue tint */
     padding: 12px 16px;
     border-radius: 10px;
-    border: 1px solid rgba(52, 152, 219, 0.15);
+    border: 1px solid rgba(52, 152, 219, 0.15);  /* Subtle blue border */
 }
 
+/* Each label + select pair is wrapped in a .filter-group.
+   flex-direction: column stacks the label above the dropdown. */
 .filter-group {
     display: flex;
     flex-direction: column;
-    gap: 5px;
+    gap: 5px;  /* Small gap between label and select */
 }
 
+/* The text label above each filter dropdown */
 .filter-group label {
     font-size: 0.9em;
     font-weight: 600;
     color: #2c3e50;
 }
 
+/* The dropdown select element for filtering by project or trapline.
+   The blue border and rounded corners give it a polished look.
+   min-width: 150px prevents the dropdown from being too narrow
+   to read the selected option. */
 .filter-select {
     padding: 8px 12px;
     border: 2px solid #3498db;
@@ -95,22 +180,28 @@ body {
     font-size: 0.9em;
     cursor: pointer;
     min-width: 150px;
-    transition: all 0.3s ease;
+    transition: all 0.3s ease;  /* Smooth transition when border/shadow changes */
 }
 
+/* When the user moves their mouse over the dropdown */
 .filter-select:hover {
-    border-color: #2980b9;
-    box-shadow: 0 2px 8px rgba(52, 152, 219, 0.2);
+    border-color: #2980b9;  /* Slightly darker blue on hover */
+    box-shadow: 0 2px 8px rgba(52, 152, 219, 0.2);  /* Soft glow */
 }
 
+/* When the user clicks the dropdown (keyboard focus state).
+   outline: none removes the default browser focus ring because
+   we're replacing it with our own more attractive glow effect. */
 .filter-select:focus {
     outline: none;
     border-color: #2980b9;
-    box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+    box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);  /* Blue focus ring */
 }
 
+/* The "🔄 Reset" button that clears all active filters.
+   The grey gradient distinguishes it from the primary blue action buttons. */
 .clear-filters-btn {
-    background: linear-gradient(135deg, #95a5a6, #7f8c8d);
+    background: linear-gradient(135deg, #95a5a6, #7f8c8d);  /* Grey gradient */
     color: white;
     border: none;
     padding: 10px 15px;
@@ -119,49 +210,66 @@ body {
     font-size: 0.9em;
     font-weight: 600;
     transition: all 0.3s ease;
-    height: fit-content;
-    margin-top: 20px;
+    height: fit-content;  /* Size to content height, not container height */
+    margin-top: 20px;     /* Aligns the button with the bottom of the dropdowns */
 }
 
+/* The button lifts slightly when hovered — a small animation that
+   makes buttons feel interactive and clickable */
 .clear-filters-btn:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(149, 165, 166, 0.3);
+    transform: translateY(-1px);  /* Move up 1 pixel */
+    box-shadow: 0 4px 12px rgba(149, 165, 166, 0.3);  /* Grey glow */
 }
 
+/* The stat cards row. flex: 1 lets it expand to fill all available
+   space between the title and the action buttons.
+   flex-wrap: nowrap keeps all four cards on the same row. */
 .header-stats {
-    flex: 1;
+    flex: 1;  /* Take up all remaining space in the row */
     display: flex;
     gap: 12px;
     flex-wrap: nowrap;
 }
 
+/* Each individual stat card (Total Traps, Checked This Week, etc.).
+   flex: 1 with min-width: 0 means each card gets an equal share of
+   the available space and can shrink if needed.
+   The blue gradient background and white text make the numbers
+   stand out as the most important information in the header. */
 .stat-card {
     flex: 1;
-    min-width: 0;
+    min-width: 0;  /* Allows the card to shrink below its content width if needed */
     background: linear-gradient(135deg, #3498db, #2980b9);
     color: white;
     padding: 12px 16px;
     border-radius: 10px;
     text-align: center;
-    box-shadow: 0 4px 15px rgba(52, 152, 219, 0.3);
+    box-shadow: 0 4px 15px rgba(52, 152, 219, 0.3);  /* Blue shadow beneath */
 }
 
+/* The large number at the top of each stat card.
+   display: block makes the span take its own line (spans are normally inline).
+   line-height: 1 removes extra space above and below the number. */
 .stat-number {
     display: block;
     font-size: 1.7em;
-    font-weight: 700;
+    font-weight: 700;  /* Bold */
     line-height: 1;
 }
 
+/* The small label below the number in each stat card */
 .stat-label {
     font-size: 0.8em;
-    opacity: 0.9;
-    white-space: nowrap;
+    opacity: 0.9;     /* Slightly transparent so the number dominates */
+    white-space: nowrap;  /* Prevent the label from wrapping */
 }
 
+/* The green "🔄 Refresh" button. flex: 0 0 auto means it won't
+   grow or shrink — it stays its natural size. white-space: nowrap
+   stops the button text from breaking onto two lines. */
 .refresh-btn {
     flex: 0 0 auto;
-    background: linear-gradient(135deg, #27ae60, #229954);
+    background: linear-gradient(135deg, #27ae60, #229954);  /* Green gradient */
     color: white;
     border: none;
     padding: 12px 20px;
@@ -174,14 +282,54 @@ body {
     white-space: nowrap;
 }
 
+/* Lifts and adds a stronger shadow when hovered */
 .refresh-btn:hover {
     transform: translateY(-2px);
     box-shadow: 0 6px 20px rgba(39, 174, 96, 0.4);
 }
 
+/* Groups the Refresh and Sign Out buttons together on the right side */
+.header-actions {
+    flex: 0 0 auto;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+/* The red "🔒 Sign Out" button. Red signals a destructive/important action. */
+.logout-btn {
+    background: linear-gradient(135deg, #e74c3c, #c0392b);  /* Red gradient */
+    color: white;
+    border: none;
+    padding: 12px 20px;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 0.9em;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(231, 76, 60, 0.3);
+    white-space: nowrap;
+}
+
+/* Lifts and deepens the shadow on hover */
+.logout-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(231, 76, 60, 0.4);
+}
+
+/* ============================================================
+   FILTER STATUS BAR
+   This notification bar appears below the header when a filter
+   is active. It shows which filters are applied and how many
+   traps are shown. app.js toggles its visibility.
+   ============================================================ */
+
+/* The filter status bar — a lightly tinted blue notification bar
+   that sits between the header and the main content. It's normally
+   hidden (style.display = 'none') and shown by app.js when needed. */
 /* Filter Status Bar */
 .filter-status {
-    background: rgba(52, 152, 219, 0.1);
+    background: rgba(52, 152, 219, 0.1);  /* Very light blue */
     color: #2980b9;
     padding: 12px 25px;
     border-radius: 10px;
@@ -193,30 +341,54 @@ body {
     backdrop-filter: blur(5px);
 }
 
+/* ============================================================
+   MAIN DASHBOARD LAYOUT
+   The main area below the header contains all the content panels
+   stacked vertically with a gap between each.
+   ============================================================ */
+
+/* Main content area — fills all remaining vertical space (flex: 1)
+   and adds 25px gaps between each section (map, analytics, reports). */
 /* Main Dashboard */
 .dashboard-main {
-    flex: 1;
+    flex: 1;       /* Grow to fill available space in the flex column container */
     display: flex;
     flex-direction: column;
     gap: 25px;
 }
 
+/* ============================================================
+   SECTION HEADERS
+   Each major section (map, analytics cards, etc.) has a header
+   row with a title on the left and controls on the right.
+   ============================================================ */
+
+/* The header row inside each section — title on the left,
+   buttons/controls on the right.
+   justify-content: space-between pushes children to opposite ends. */
 /* Section Headers */
 .section-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
     margin-bottom: 20px;
-    flex-wrap: wrap;
+    flex-wrap: wrap;  /* Allows buttons to wrap below the title on narrow screens */
     gap: 15px;
 }
 
+/* The h2 heading inside each section header */
 .section-header h2 {
     color: #2c3e50;
     font-size: 1.8em;
     font-weight: 600;
 }
 
+/* ============================================================
+   MAP SECTION
+   Styles for the interactive Mapbox map and its controls.
+   ============================================================ */
+
+/* The white card that wraps the map, its header, and the legend */
 /* Map Section */
 .map-section {
     background: rgba(255, 255, 255, 0.95);
@@ -226,13 +398,16 @@ body {
     backdrop-filter: blur(10px);
 }
 
+/* Groups the "Fit All" and "Satellite" buttons horizontally */
 .map-controls {
     display: flex;
     gap: 10px;
 }
 
+/* Individual map control buttons (Fit All, Satellite).
+   Purple gradient to distinguish them from the green Refresh button. */
 .map-btn {
-    background: linear-gradient(135deg, #9b59b6, #8e44ad);
+    background: linear-gradient(135deg, #9b59b6, #8e44ad);  /* Purple gradient */
     color: white;
     border: none;
     padding: 10px 15px;
@@ -243,24 +418,35 @@ body {
     transition: all 0.3s ease;
 }
 
+/* Lifts slightly and adds a purple glow on hover */
 .map-btn:hover {
     transform: translateY(-1px);
     box-shadow: 0 4px 12px rgba(155, 89, 182, 0.3);
 }
 
+/* The container div for the actual map canvas.
+   position: relative is needed so the legend can be positioned
+   absolutely inside it (relative to this container, not the page).
+   height: 1000px gives the map plenty of vertical space.
+   overflow: hidden clips the map to the rounded corners. */
 .map-container {
-    position: relative;
+    position: relative;   /* Establishes a positioning context for the legend */
     height: 1000px;
     border-radius: 10px;
-    overflow: hidden;
+    overflow: hidden;      /* Clips the map to the rounded corners */
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
 }
 
+/* The Mapbox map fills its container completely */
 .map {
     width: 100%;
     height: 100%;
 }
 
+/* The colour legend overlaid in the bottom-left corner of the map.
+   position: absolute places it relative to .map-container.
+   bottom: 20px left: 20px anchors it 20px from the bottom-left corner.
+   backdrop-filter blurs the map behind the legend box. */
 .map-legend {
     position: absolute;
     bottom: 20px;
@@ -272,6 +458,9 @@ body {
     backdrop-filter: blur(10px);
 }
 
+/* Each row in the legend: a coloured circle + a label.
+   display: flex + align-items: center keeps the circle and
+   text vertically aligned on the same line. */
 .legend-item {
     display: flex;
     align-items: center;
@@ -280,13 +469,28 @@ body {
     font-size: 0.9em;
 }
 
+/* The coloured circle dot in each legend item.
+   border-radius: 50% makes a square element into a circle.
+   The actual background colour is set inline in the HTML
+   (e.g. style="background:#27ae60;"). */
 .legend-color {
     width: 16px;
     height: 16px;
-    border-radius: 50%;
+    border-radius: 50%;  /* Turn the square into a circle */
     display: block;
 }
 
+/* ============================================================
+   ANALYTICS GRID
+   The analytics section uses CSS Grid to automatically arrange
+   the cards side-by-side. auto-fit and minmax let the grid
+   decide how many columns fit — on a wide screen you might see
+   3–4 columns; on a phone, just 1.
+   ============================================================ */
+
+/* The grid container. repeat(auto-fit, minmax(300px, 1fr)) means:
+   create as many columns as fit on the screen, each at least 300px
+   wide and at most an equal share (1fr) of the available space. */
 /* Analytics Grid */
 .analytics-grid {
     display: grid;
@@ -294,14 +498,21 @@ body {
     gap: 25px;
 }
 
+/* A card that spans the full row width (e.g. the chart cards).
+   grid-column: 1 / -1 means "start at column 1, end at the last column". */
 .analytics-card--wide {
-    grid-column: 1 / -1;
+    grid-column: 1 / -1;  /* Span all columns in the grid */
 }
 
+/* A card that spans two columns (half the row on a 4-column grid) */
 .analytics-card--half {
     grid-column: span 2;
 }
 
+/* Make the performer panel cards (top/worst performers, species,
+   trap type) use flex-direction: column so their inner content
+   can expand vertically to fill the card height. The :has() selector
+   targets cards that contain a specific descendant element. */
 /* All-time row: make cards flex columns so inner content can fill height */
 .analytics-card:has(#topPerformersAllTime),
 .analytics-card:has(#worstPerformersAllTime),
@@ -311,16 +522,20 @@ body {
     flex-direction: column;
 }
 
+/* The performer list divs inside those cards grow to fill
+   all remaining vertical space, and space items evenly. */
 #topPerformersAllTime,
 #worstPerformersAllTime,
 #speciesAllTime,
 #trapTypePerf {
-    flex: 1;
+    flex: 1;  /* Grow to fill available height */
     display: flex;
     flex-direction: column;
-    justify-content: space-between;
+    justify-content: space-between;  /* Spread items evenly from top to bottom */
 }
 
+/* Each analytics card — a white "frosted glass" panel.
+   transition: transform enables the hover lift animation. */
 .analytics-card {
     background: rgba(255, 255, 255, 0.95);
     border-radius: 15px;
@@ -330,10 +545,16 @@ body {
     transition: transform 0.3s ease;
 }
 
+/* Cards lift 5px upward when the mouse hovers over them.
+   Combined with the existing box-shadow, this creates a
+   convincing "floating card" effect. */
 .analytics-card:hover {
     transform: translateY(-5px);
 }
 
+/* The h3 heading at the top of each analytics card.
+   The blue bottom border acts as a visual separator between
+   the card title and its content. */
 .analytics-card h3 {
     color: #2c3e50;
     font-size: 1.3em;
@@ -343,47 +564,76 @@ body {
     padding-bottom: 10px;
 }
 
+/* ============================================================
+   ACTIVITY LIST
+   Used in "recent activity" style cards where records are
+   shown as a scrollable list of items.
+   ============================================================ */
+
+/* A scrollable container for activity items.
+   max-height: 300px limits the list height; overflow-y: auto
+   adds a scrollbar when the list overflows. */
 /* Activity List */
 .activity-list {
     max-height: 300px;
-    overflow-y: auto;
+    overflow-y: auto;  /* Show a scrollbar only when needed */
 }
 
+/* Each item in the activity list (e.g. a recent check record).
+   justify-content: space-between pushes the info and date
+   to opposite sides of the row. */
 .activity-item {
     display: flex;
     justify-content: space-between;
     align-items: center;
     padding: 12px 0;
-    border-bottom: 1px solid #ecf0f1;
+    border-bottom: 1px solid #ecf0f1;  /* Light grey dividing line */
 }
 
+/* Remove the bottom border from the last item so there's no
+   trailing line at the bottom of the list */
 .activity-item:last-child {
     border-bottom: none;
 }
 
+/* The left side of each activity item (name and details) */
 .activity-info {
-    flex: 1;
+    flex: 1;  /* Takes up all space except what the date badge needs */
 }
 
+/* The trap name/code in bold */
 .activity-trap {
     font-weight: 600;
     color: #2c3e50;
 }
 
+/* The secondary details line below the trap name */
 .activity-details {
     font-size: 0.9em;
-    color: #7f8c8d;
+    color: #7f8c8d;  /* Muted grey */
     margin-top: 2px;
 }
 
+/* The date badge on the right side of each activity item.
+   The light grey pill shape makes the date visually distinct. */
 .activity-date {
     font-size: 0.8em;
     color: #95a5a6;
     background: #ecf0f1;
     padding: 4px 8px;
-    border-radius: 12px;
+    border-radius: 12px;  /* Pill shape */
 }
 
+/* ============================================================
+   PERFORMER ITEMS
+   Used in the Top Performers, Worst Performers, Species,
+   Overdue Traps, and Trap Type cards. Each item shows a rank
+   number, a name/detail block, and a coloured rate badge.
+   ============================================================ */
+
+/* Individual performer row — rank | info | badge.
+   Uses the same layout as .activity-item: justify-content:
+   space-between pushes rank to left and badge to right. */
 /* Top Performers */
 .performer-item {
     display: flex;
@@ -393,66 +643,89 @@ body {
     border-bottom: 1px solid #ecf0f1;
 }
 
+/* Remove the trailing border from the last performer item */
 .performer-item:last-child {
     border-bottom: none;
 }
 
+/* The rank number (#1, #2, etc.) on the left of each row.
+   min-width: 30px reserves space so items without a rank
+   (like species rows) don't look misaligned. */
 .performer-rank {
     font-size: 1.2em;
     font-weight: 700;
-    color: #3498db;
+    color: #3498db;  /* Blue to make ranks visually prominent */
     margin-right: 15px;
     min-width: 30px;
 }
 
+/* The middle section containing the trap name and detail line */
 .performer-info {
-    flex: 1;
+    flex: 1;  /* Takes all available space between rank and badge */
 }
 
+/* The trap name or species name — bold and dark */
 .performer-name {
     font-weight: 600;
     color: #2c3e50;
 }
 
+/* The secondary line below the name (e.g. "12 catches · 40 checks") */
 .performer-location {
     font-size: 0.9em;
     color: #7f8c8d;
 }
 
+/* The coloured rate badge on the right (e.g. "30%").
+   flex-shrink: 0 prevents it from getting smaller if the row
+   is narrow. The background colour is set dynamically by
+   JavaScript (rateColor function in app.js). */
 .performer-rate-badge {
-    flex-shrink: 0;
+    flex-shrink: 0;   /* Never compress this badge */
     color: white;
     font-weight: 700;
     font-size: 0.95em;
     padding: 6px 10px;
     border-radius: 8px;
-    min-width: 48px;
+    min-width: 48px;   /* Ensures single-digit and double-digit percentages align */
     text-align: center;
 }
 
+/* ============================================================
+   CHECK ACTIVITY CARD
+   The "Check Activity — 12 Months" card shows four summary
+   statistics in a 2x2 grid layout.
+   ============================================================ */
+
+/* A 2-column grid inside the check activity card.
+   The four stat boxes (total checks, % visited, avg checks,
+   busiest month) sit two per row. */
 /* Check Activity card */
 .activity-stats {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 1fr 1fr;  /* Two equal-width columns */
     gap: 12px;
     margin-top: 5px;
 }
 
+/* Each individual stat box — a light grey rounded panel */
 .activity-stat {
-    background: #f8f9fa;
+    background: #f8f9fa;  /* Very light grey */
     border-radius: 8px;
     padding: 12px;
     text-align: center;
 }
 
+/* The large number inside each stat box (e.g. "247") */
 .activity-stat-number {
-    display: block;
+    display: block;        /* Takes its own line */
     font-size: 1.6em;
     font-weight: 700;
     color: #2c3e50;
     line-height: 1;
 }
 
+/* The small label below the number (e.g. "Total checks") */
 .activity-stat-label {
     font-size: 0.78em;
     color: #7f8c8d;
@@ -460,50 +733,74 @@ body {
     display: block;
 }
 
+/* ============================================================
+   SPECIES BAR CHART
+   The species breakdown uses a horizontal bar inside each
+   performer row to show the relative proportion of each species.
+   ============================================================ */
+
+/* The grey background track of the horizontal bar */
 /* Species & overdue rows reuse .performer-item */
 .species-bar-bg {
-    flex: 1;
+    flex: 1;          /* Fills all available space in the row */
     height: 6px;
-    background: #ecf0f1;
+    background: #ecf0f1;  /* Light grey track */
     border-radius: 3px;
-    margin: 0 10px;
-    overflow: hidden;
+    margin: 0 10px;   /* Small gaps on left and right */
+    overflow: hidden; /* Clips the blue fill to the track's rounded corners */
 }
 
+/* The blue fill that represents the proportion of this species.
+   Its width is set dynamically by JavaScript as an inline style
+   (e.g. style="width: 75%;"). */
 .species-bar-fill {
     height: 100%;
     border-radius: 3px;
-    background: linear-gradient(90deg, #3498db, #2980b9);
+    background: linear-gradient(90deg, #3498db, #2980b9);  /* Left to right blue gradient */
 }
 
+/* The count number to the right of the bar (e.g. "42") */
 .species-count {
     font-weight: 700;
     color: #2c3e50;
-    min-width: 28px;
+    min-width: 28px;    /* Reserves enough space so the bar doesn't jump around */
     text-align: right;
     font-size: 0.95em;
 }
 
+/* ============================================================
+   LAST NOTES PANEL
+   The "Last Notes" card shows the most recent field note for
+   each trap. It has search, filter, sort, and export controls
+   stacked vertically above a scrollable list of notes.
+   ============================================================ */
+
+/* Container for all the controls (search, checkbox, sort, page size,
+   export). Stacked in a single column with small gaps. */
 /* Last Notes Panel */
 .notes-controls--stacked {
     display: grid;
-    grid-template-columns: 1fr;
+    grid-template-columns: 1fr;  /* Single column — all controls full width */
     gap: 0.6rem;
     margin-bottom: 0.75rem;
 }
 
+/* Each individual control group (label + input/select pair) */
 .notes-controls--stacked .control {
     display: flex;
-    flex-direction: column;
+    flex-direction: column;  /* Label stacked above the input */
     gap: 0.35rem;
 }
 
+/* The small grey label above each control */
 .notes-controls--stacked .control label {
     font-size: 0.85rem;
     color: #6b7280;
     font-weight: 500;
 }
 
+/* Text inputs and select dropdowns inside the notes controls.
+   width: 100% makes them fill the full control width. */
 .notes-controls--stacked .input,
 .notes-controls--stacked .select {
     width: 100%;
@@ -515,6 +812,7 @@ body {
     transition: border-color 0.3s ease;
 }
 
+/* Blue highlight on focus for the notes search/select inputs */
 .notes-controls--stacked .input:focus,
 .notes-controls--stacked .select:focus {
     outline: none;
@@ -522,23 +820,31 @@ body {
     box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
 }
 
+/* The checkbox label inside the notes controls (for "Only with notes").
+   accent-color changes the tick/checkbox colour to match the blue theme. */
 .notes-controls--stacked .control > label > input[type="checkbox"] {
     margin-right: 6px;
     accent-color: #3498db;
 }
 
+/* The export row at the bottom of the notes controls.
+   Uses !important to override the column layout set by .control,
+   switching to a row so the dropdown and button sit side by side. */
 .export-row {
     flex-direction: row !important;
     align-items: center;
     gap: 0.5rem;
 }
 
+/* The export format dropdown (Visible page / All filtered) takes
+   all remaining space in the export row. */
 .export-row .export-chooser {
     flex: 1 1 auto;
 }
 
+/* The red "Export CSV" button — stands out to signal an action */
 .export-btn {
-    background: #ef5350;
+    background: #ef5350;  /* Tomato red */
     color: #fff;
     border: none;
     padding: 9px 14px;
@@ -550,14 +856,18 @@ body {
     transition: transform .04s ease, background .15s ease;
 }
 
+/* Slightly darker red on hover */
 .export-btn:hover {
     background: #e53935;
 }
 
+/* Very subtle downward press when clicked */
 .export-btn:active {
     transform: translateY(1px);
 }
 
+/* The scrollable list of note items. max-height limits how tall
+   it can get; overflow-y: auto adds a scrollbar when it overflows. */
 .last-notes-list {
     display: flex;
     flex-direction: column;
@@ -565,15 +875,19 @@ body {
     overflow-y: auto;
 }
 
+/* Each individual note entry in the list */
 .ln-item {
     padding: 10px 4px;
-    border-bottom: 1px solid #e5e7eb;
+    border-bottom: 1px solid #e5e7eb;  /* Light grey divider */
 }
 
+/* Remove the trailing border from the last note item */
 .ln-item:last-child {
     border-bottom: none;
 }
 
+/* The top row of each note item: trap name on left, date on right.
+   justify-content: space-between pushes them apart. */
 .ln-row {
     display: flex;
     justify-content: space-between;
@@ -581,37 +895,45 @@ body {
     margin-bottom: 4px;
 }
 
+/* The trap code/name in each note item */
 .ln-trap {
     font-weight: 600;
     color: #34495e;
 }
 
+/* The date on the right side of each note item */
 .ln-date {
     color: #6b7280;
     font-size: .9rem;
-    white-space: nowrap;
+    white-space: nowrap;  /* Keep the date on one line */
 }
 
+/* The actual note text below the trap name and date.
+   white-space: pre-wrap preserves line breaks in the note text
+   (the trapper may have pressed Enter for paragraph breaks). */
 .ln-note {
-    white-space: pre-wrap;
+    white-space: pre-wrap;   /* Show newlines as actual line breaks */
     line-height: 1.25rem;
     color: #2c3e50;
 }
 
+/* Used for italicised placeholder text like "No note" */
 .muted {
     color: #9ca3af;
     font-style: italic;
 }
 
+/* The pagination controls below the notes list: Prev | Page X of Y | Next */
 .notes-pager {
     display: flex;
-    justify-content: space-between;
+    justify-content: space-between;  /* Pushes Prev to left, Next to right */
     align-items: center;
     margin-top: 1rem;
     padding-top: 1rem;
     border-top: 1px solid #e5e7eb;
 }
 
+/* The Prev/Next pagination buttons */
 .page-btn {
     background: #3498db;
     color: white;
@@ -623,32 +945,47 @@ body {
     transition: all 0.3s ease;
 }
 
+/* Darker blue on hover (only when not disabled) */
 .page-btn:hover:not(:disabled) {
     background: #2980b9;
 }
 
+/* Disabled pagination button (when already on first/last page) */
 .page-btn:disabled {
-    background: #bdc3c7;
-    cursor: not-allowed;
+    background: #bdc3c7;   /* Grey — visually indicates unavailability */
+    cursor: not-allowed;   /* Shows a "not allowed" cursor on hover */
 }
 
+/* The "Page X of Y · Z items" text between Prev and Next */
 .pager-text {
     font-size: 0.9em;
     color: #7f8c8d;
 }
 
+/* ============================================================
+   REPORTS SECTION
+   The detailed reports sit below the analytics grid. They use
+   a two-column layout: the trapline summary on the left and
+   the check record log on the right.
+   ============================================================ */
+
+/* Outer wrapper for the entire reports section */
 /* Reports Section */
 /* ---- Detailed Reports ---- */
 .reports-section {
     margin-bottom: 25px;
 }
 
+/* Two-column layout: trapline summary takes 2 parts of width,
+   check record log takes 3 parts. The log gets more space
+   because it has more columns in its table. */
 .reports-layout {
     display: grid;
-    grid-template-columns: 2fr 3fr;
+    grid-template-columns: 2fr 3fr;  /* 2/5 for summary, 3/5 for log */
     gap: 25px;
 }
 
+/* Each report panel — same white frosted-glass card style as analytics cards */
 .report-panel {
     background: rgba(255, 255, 255, 0.95);
     border-radius: 15px;
@@ -657,6 +994,7 @@ body {
     backdrop-filter: blur(10px);
 }
 
+/* The h3 heading inside each report panel */
 .report-panel h3 {
     color: #2c3e50;
     font-size: 1.3em;
@@ -666,6 +1004,9 @@ body {
     border-bottom: 2px solid #3498db;
 }
 
+/* The header row of the check record log — contains the title
+   on the left and the filter dropdowns on the right.
+   align-items: flex-start aligns to the top rather than centre. */
 .log-header {
     display: flex;
     align-items: flex-start;
@@ -676,19 +1017,23 @@ body {
     border-bottom: 2px solid #3498db;
 }
 
+/* The h3 inside the log header overrides the report-panel h3 border
+   so the blue line only appears once at the header-row level. */
 .log-header h3 {
     margin: 0;
-    border: none;
+    border: none;   /* Remove the bottom border from the h3 itself */
     padding: 0;
 }
 
+/* The row of filter controls in the log header (period, trapline, export) */
 .log-controls {
     display: flex;
     gap: 8px;
     align-items: center;
-    flex-wrap: wrap;
+    flex-wrap: wrap;  /* Wraps onto the next line on narrow screens */
 }
 
+/* The period and trapline filter dropdowns in the log header */
 .log-controls select {
     padding: 6px 10px;
     border: 2px solid #3498db;
@@ -699,15 +1044,24 @@ body {
     cursor: pointer;
 }
 
+/* ============================================================
+   REPORT TABLES
+   HTML tables used in the trapline summary and check record log.
+   ============================================================ */
+
+/* Full-width table with collapsed borders (no double borders
+   between adjacent cells). Slightly smaller font to fit more data. */
 /* Report tables */
 .report-table {
     width: 100%;
-    border-collapse: collapse;
+    border-collapse: collapse;  /* Remove gaps between cell borders */
     font-size: 0.87em;
 }
 
+/* Table header cells — light grey background with uppercase labels
+   and a bold bottom border to separate them from the data rows. */
 .report-table th {
-    background: #f0f4f8;
+    background: #f0f4f8;         /* Light blue-grey */
     color: #2c3e50;
     font-weight: 700;
     padding: 9px 8px;
@@ -715,58 +1069,75 @@ body {
     border-bottom: 2px solid #dce3ea;
     white-space: nowrap;
     font-size: 0.85em;
-    text-transform: uppercase;
+    text-transform: uppercase;   /* ALL CAPS for column headers */
     letter-spacing: 0.3px;
 }
 
+/* Table data cells — light bottom border creates row separators */
 .report-table td {
     padding: 8px;
-    border-bottom: 1px solid #f0f0f0;
+    border-bottom: 1px solid #f0f0f0;  /* Very faint row divider */
     color: #2c3e50;
-    vertical-align: middle;
+    vertical-align: middle;  /* Centre content vertically in the cell */
 }
 
+/* Highlight an entire row when the mouse hovers over it —
+   helpful for reading across wide tables */
 .report-table tr:hover td {
-    background: #f8f9ff;
+    background: #f8f9ff;  /* Very faint blue highlight */
 }
 
+/* Rows in the trapline summary table are clickable (they filter
+   the check record log). The pointer cursor signals this. */
 .summary-row {
     cursor: pointer;
 }
 
+/* The coloured pill badge showing catch rate (e.g. "25%").
+   The background colour is set dynamically by JavaScript. */
 .rate-pill {
     color: white;
     font-weight: 700;
     font-size: 0.82em;
     padding: 3px 8px;
     border-radius: 6px;
-    display: inline-block;
+    display: inline-block;  /* Makes the span take only as much width as its content */
 }
 
+/* Green text for catch results in the log (shown when a pest was caught) */
 .result-catch {
     color: #27ae60;
     font-weight: 600;
 }
 
+/* Grey text for "clear" results (trap checked, nothing caught) */
 .result-clear {
     color: #95a5a6;
 }
 
+/* Red bold text for overdue counts — draws attention to traps
+   that haven't been checked in more than 14 days */
 .overdue-cell {
     color: #e74c3c;
     font-weight: 600;
 }
 
+/* Green text for "0 overdue" — reassuring confirmation that
+   all traps in this trapline are up to date */
 .ok-cell {
     color: #27ae60;
 }
 
+/* Notes cell in the check record log — slightly smaller text
+   and limited width to prevent very long notes from blowing
+   out the table columns */
 .notes-cell {
     font-size: 0.85em;
     color: #7f8c8d;
     max-width: 180px;
 }
 
+/* Centred pagination controls below each report table */
 .report-pager {
     display: flex;
     align-items: center;
@@ -777,29 +1148,40 @@ body {
     border-top: 1px solid #ecf0f1;
 }
 
+/* ============================================================
+   STATUS BADGES
+   Small pill badges used in the trap detail modal to show
+   whether a trap was recently checked, needs attention, or is overdue.
+   ============================================================ */
+
+/* Base badge style — pill shape with uppercase text */
 .status-badge {
     padding: 4px 12px;
-    border-radius: 20px;
+    border-radius: 20px;   /* Very round corners = pill shape */
     font-size: 0.8em;
     font-weight: 600;
     text-transform: uppercase;
 }
 
+/* Green badge — trap checked within the last 7 days */
 .status-recent {
     background: #d4edda;
     color: #155724;
 }
 
+/* Amber badge — trap checked 8–14 days ago */
 .status-warning {
     background: #fff3cd;
     color: #856404;
 }
 
+/* Red badge — trap overdue (more than 14 days since last check) */
 .status-overdue {
     background: #f8d7da;
     color: #721c24;
 }
 
+/* Blue action button used in the trap detail modal to trigger actions */
 .action-btn {
     background: #3498db;
     color: white;
@@ -811,10 +1193,18 @@ body {
     transition: all 0.3s ease;
 }
 
+/* Darker blue on hover */
 .action-btn:hover {
     background: #2980b9;
 }
 
+/* ============================================================
+   STATUS BAR (footer)
+   A bar at the bottom of the page showing connection and
+   data load status. app.js updates the text in real time.
+   ============================================================ */
+
+/* The footer status bar — same frosted glass style as the header card */
 /* Status Bar */
 .status-bar {
     background: rgba(255, 255, 255, 0.95);
@@ -822,66 +1212,87 @@ body {
     padding: 15px 25px;
     margin-top: 25px;
     display: flex;
-    justify-content: space-between;
+    justify-content: space-between;  /* Status info left, API info right */
     align-items: center;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
     backdrop-filter: blur(10px);
 }
 
+/* Groups the two status spans (connection + data) horizontally */
 .status-info {
     display: flex;
     gap: 20px;
     flex-wrap: wrap;
 }
 
+/* Default styling for both status spans — green indicates healthy state */
 .status-info span {
     font-size: 0.9em;
     color: #27ae60;
     font-weight: 500;
 }
 
+/* Applied by app.js when data has loaded successfully */
 .status-success {
-    color: #27ae60 !important;
+    color: #27ae60 !important;  /* !important ensures this overrides the default */
 }
 
+/* Applied by app.js when there's an API error */
 .status-error {
     color: #e74c3c !important;
 }
 
+/* Applied by app.js while data is loading */
 .status-loading {
     color: #f39c12 !important;
 }
 
+/* Small grey text on the right side of the footer showing which
+   APIs are powering the dashboard */
 .api-info {
     font-size: 0.8em;
     color: #7f8c8d;
 }
 
+/* ============================================================
+   MODAL — Trap Details Pop-up
+   A full-screen overlay with a white panel in the centre.
+   Appears when the user clicks "View Details" on a map pin.
+   ============================================================ */
+
+/* The modal overlay — covers the entire screen with a semi-transparent
+   dark background. position: fixed means it stays in place even
+   when the page is scrolled. z-index: 1000 puts it on top of
+   everything else on the page. */
 /* Modal Styles */
 .modal {
-    display: none;
-    position: fixed;
-    z-index: 1000;
+    display: none;             /* Hidden by default — shown by app.js */
+    position: fixed;           /* Fixed to the viewport, doesn't scroll */
+    z-index: 1000;             /* Above all other content */
     left: 0;
     top: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(0, 0, 0, 0.6);
-    backdrop-filter: blur(5px);
+    background-color: rgba(0, 0, 0, 0.6);  /* 60% opaque black overlay */
+    backdrop-filter: blur(5px);             /* Blurs the dashboard behind the modal */
 }
 
+/* The white modal panel itself. margin: 5% auto centres it
+   horizontally with 5% vertical offset from the top. */
 .modal-content {
     background: white;
-    margin: 5% auto;
+    margin: 5% auto;     /* 5% from top, centred left/right */
     padding: 0;
     border-radius: 15px;
     width: 90%;
     max-width: 600px;
-    max-height: 80vh;
-    overflow: hidden;
+    max-height: 80vh;    /* Never taller than 80% of the screen */
+    overflow: hidden;    /* Clips content to rounded corners */
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
 }
 
+/* The blue gradient header bar at the top of the modal.
+   Contains the trap name and the × close button. */
 .modal-header {
     background: linear-gradient(135deg, #3498db, #2980b9);
     color: white;
@@ -891,11 +1302,15 @@ body {
     align-items: center;
 }
 
+/* The trap name heading in the modal header */
 .modal-header h3 {
     margin: 0;
     font-size: 1.5em;
 }
 
+/* The × close button in the top-right of the modal.
+   border-radius: 50% makes it a circle.
+   Clicking this button hides the modal (handled in app.js). */
 .close-btn {
     background: none;
     border: none;
@@ -908,40 +1323,49 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    border-radius: 50%;
+    border-radius: 50%;   /* Circular button */
     transition: background 0.3s ease;
 }
 
+/* Shows a subtle white circle behind the × on hover */
 .close-btn:hover {
     background: rgba(255, 255, 255, 0.2);
 }
 
+/* The scrollable body of the modal containing trap details
+   and recent check records */
 .modal-body {
     padding: 25px;
-    max-height: 60vh;
-    overflow-y: auto;
+    max-height: 60vh;   /* Limit height to keep the × button visible */
+    overflow-y: auto;   /* Scroll if there are many check records */
 }
 
+/* Each individual check record entry in the modal */
 .record-item {
     padding: 12px 0;
     border-bottom: 1px solid #ecf0f1;
 }
 
+/* Remove the trailing border from the last record */
 .record-item:last-child {
     border-bottom: none;
 }
 
+/* The date of the check record — blue and bold to stand out */
 .record-date {
     font-weight: 600;
     color: #3498db;
     margin-bottom: 5px;
 }
 
+/* The result line (e.g. "🎯 Caught: Rat" or "✅ Checked - No catch") */
 .record-details {
     color: #2c3e50;
     margin-bottom: 5px;
 }
 
+/* The field note, shown in a light grey box below the result.
+   font-style: italic visually distinguishes notes from record data. */
 .record-notes {
     color: #7f8c8d;
     font-style: italic;
@@ -951,6 +1375,15 @@ body {
     margin-top: 5px;
 }
 
+/* ============================================================
+   LOADING STATE
+   Used as placeholder content while data is being fetched.
+   Many divs on the page start with <div class="loading">...
+   which is then replaced by app.js once data arrives.
+   ============================================================ */
+
+/* The loading placeholder text — centred, grey, and italic to
+   visually distinguish it from real data */
 /* Loading States */
 .loading {
     text-align: center;
@@ -959,6 +1392,16 @@ body {
     padding: 20px;
 }
 
+/* ============================================================
+   RESPONSIVE DESIGN
+   These @media rules adjust the layout for smaller screens.
+   @media (max-width: Xpx) means "apply these rules only when
+   the screen is X pixels wide or narrower".
+   ============================================================ */
+
+/* ---- Tablet breakpoint (max 1200px) ---- */
+/* On medium screens (tablets), allow the analytics grid to use
+   slightly narrower minimum card widths so more cards fit. */
 /* Responsive Design */
 @media (max-width: 1200px) {
     .analytics-grid {
@@ -966,104 +1409,136 @@ body {
     }
 }
 
+/* ---- Mobile breakpoint (max 768px) ---- */
+/* On small screens (phones), we stack things vertically and
+   reduce sizes to fit the narrow screen. */
 @media (max-width: 768px) {
+    /* Less padding on small screens to maximise content area */
     .container {
         padding: 15px;
     }
-    
+
+    /* Scale down the h1 heading so it fits on small screens */
     .project-info h1 {
         font-size: 1.5em;
     }
 
+    /* Allow the header top row to wrap onto multiple lines */
     .header-top {
         flex-wrap: wrap;
     }
 
+    /* Allow stat cards to wrap onto two rows on small screens */
     .header-stats {
         flex-wrap: wrap;
     }
 
+    /* Stack filter controls vertically on small screens */
     .filter-controls {
         flex-direction: column;
         gap: 15px;
     }
-    
+
+    /* Give each filter group reasonable width on small screens */
     .filter-group {
         width: 100%;
         max-width: 200px;
     }
-    
+
+    /* Make dropdowns span the full filter group width on mobile */
     .filter-select {
         min-width: 100%;
     }
-    
+
+    /* Remove the top margin from Reset button when stacked vertically */
     .clear-filters-btn {
         margin-top: 0;
     }
-    
+
+    /* Stack section header (title and buttons) vertically on small screens */
     .section-header {
         flex-direction: column;
         align-items: flex-start;
     }
-    
+
+    /* Reduce the map height on small screens to leave room for other content */
     .map-container {
         height: 600px;
     }
-    
+
+    /* Force analytics cards into a single column on mobile */
     .analytics-grid {
         grid-template-columns: 1fr;
     }
-    
+
+    /* Stack the status bar items vertically and centre them */
     .status-bar {
         flex-direction: column;
         gap: 10px;
         text-align: center;
     }
-    
+
+    /* Increase the width of the modal on small screens */
     .modal-content {
         width: 95%;
         margin: 10% auto;
     }
-    
+
+    /* Increase the gap between notes controls on mobile */
     .notes-controls--stacked {
         gap: 1rem;
     }
-    
+
+    /* Stack the export row (dropdown + button) vertically on mobile */
     .export-row {
         flex-direction: column !important;
         align-items: stretch;
         gap: 0.75rem;
     }
-    
+
+    /* Make the export chooser dropdown full width on mobile */
     .export-chooser {
         width: 100%;
     }
 }
 
+/* ============================================================
+   ANIMATIONS
+   CSS animations add motion to the page for a more polished feel.
+   ============================================================ */
+
+/* fadeInUp: elements start lower and transparent, then slide up
+   into their final position and become fully opaque. */
 /* Animation */
 @keyframes fadeInUp {
     from {
         opacity: 0;
-        transform: translateY(30px);
+        transform: translateY(30px);  /* Start 30px below final position */
     }
     to {
         opacity: 1;
-        transform: translateY(0);
+        transform: translateY(0);     /* End at the natural position */
     }
 }
 
+/* Apply the fadeInUp animation to all major content cards
+   when they first appear on the page */
 .analytics-card,
 .map-section,
 .reports-section {
     animation: fadeInUp 0.6s ease-out;
 }
 
+/* Chart containers — max-width: 100% prevents charts from
+   overflowing their parent card on any screen size */
 /* Chart containers */
 canvas {
     max-width: 100%;
-    height: auto !important;
+    height: auto !important;  /* !important overrides Chart.js inline styles */
 }
 
+/* slideInFromTop: the filter controls slide down into view when
+   the page loads, drawing attention to the filtering feature */
 /* Filter enhancement animations */
 .filter-controls {
     animation: slideInFromTop 0.5s ease-out;
@@ -1072,7 +1547,7 @@ canvas {
 @keyframes slideInFromTop {
     from {
         opacity: 0;
-        transform: translateY(-20px);
+        transform: translateY(-20px);  /* Start 20px above final position */
     }
     to {
         opacity: 1;
@@ -1080,46 +1555,78 @@ canvas {
     }
 }
 
+/* fadeIn: the filter status bar fades in gently when it appears */
 .filter-status {
     animation: fadeIn 0.3s ease-out;
 }
 
 @keyframes fadeIn {
     from {
-        opacity: 0;
+        opacity: 0;   /* Start invisible */
     }
     to {
-        opacity: 1;
+        opacity: 1;   /* End fully visible */
     }
 }
 
+/* ============================================================
+   ACCESSIBILITY IMPROVEMENTS
+   These rules make the dashboard easier to use for people who
+   navigate with a keyboard or use assistive technologies.
+   ============================================================ */
+
+/* A visible blue outline appears around focused elements when
+   navigating with the keyboard (Tab key). This makes it clear
+   which element is currently active — important for keyboard
+   and screen reader users. */
 /* Focus and accessibility improvements */
 .filter-select:focus,
 .action-btn:focus,
 .page-btn:focus,
 .close-btn:focus {
     outline: 2px solid #3498db;
-    outline-offset: 2px;
+    outline-offset: 2px;  /* 2px gap between the element and the outline ring */
 }
+
+/* ============================================================
+   HIGH CONTRAST MODE
+   When the operating system is set to High Contrast mode (a
+   Windows accessibility feature for users with low vision),
+   we increase the contrast of certain elements to ensure they
+   remain readable.
+   ============================================================ */
 
 /* High contrast mode support */
 @media (prefers-contrast: high) {
+    /* Stronger background and border on the filter controls */
     .filter-controls {
         background: rgba(255, 255, 255, 0.9);
         border: 2px solid #2c3e50;
     }
-    
+
+    /* Thicker border on filter dropdowns for better visibility */
     .filter-select {
         border-width: 3px;
     }
-    
+
+    /* Add a border to status badges so their colour alone isn't
+       the only visual indicator (colour blindness accessibility) */
     .status-badge {
-        border: 2px solid currentColor;
+        border: 2px solid currentColor;  /* currentColor uses the element's text colour */
     }
 }
 
+/* ============================================================
+   REDUCED MOTION MODE
+   Some users (e.g. those with vestibular disorders or motion
+   sensitivity) prefer less animation. This media query
+   detects that preference and disables or minimises all
+   animation and transitions across the dashboard.
+   ============================================================ */
+
 /* Reduced motion support */
 @media (prefers-reduced-motion: reduce) {
+    /* Collapse all animation durations to essentially nothing */
     *,
     *::before,
     *::after {
@@ -1127,11 +1634,13 @@ canvas {
         animation-iteration-count: 1 !important;
         transition-duration: 0.01ms !important;
     }
-    
+
+    /* Disable the hover "lift" effect on analytics cards */
     .analytics-card:hover {
         transform: none;
     }
-    
+
+    /* Disable hover lift animations on buttons */
     .refresh-btn:hover,
     .map-btn:hover,
     .clear-filters-btn:hover {
