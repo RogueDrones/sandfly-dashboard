@@ -1048,18 +1048,21 @@ function updateMapData() {
     // The popup content is an HTML string built from the trap's properties.
     const marker = new mapboxgl.Marker({ color: markerColor })
       .setLngLat(coords)  // Position the marker at the trap's coordinates
-      .setPopup(new mapboxgl.Popup({ offset: 25 }).setHTML(`
-        <div style="padding: 15px; max-width: 300px;">
-          <h3 style="margin: 0 0 10px 0; color: #2c3e50;">Trap ${escapeHtml(props.code || props.trap_id)}</h3>
-          <p style="margin: 0 0 5px 0;"><strong>Project:</strong> ${escapeHtml(project)}</p>
-          <p style="margin: 0 0 5px 0;"><strong>Trapline:</strong> ${escapeHtml(trapline)}</p>
-          <p style="margin: 0 0 5px 0;"><strong>Type:</strong> ${escapeHtml(props.trap_type || '—')}</p>
-          <p style="margin: 0 0 5px 0;"><strong>Installed:</strong> ${props.date_installed ? new Date(props.date_installed).toLocaleDateString('en-NZ') : '—'}</p>
-          <p style="margin: 0 0 5px 0;"><strong>Last Check:</strong> ${lastDate ? new Date(lastDate).toLocaleDateString('en-NZ') : 'Never'}</p>
-          <p style="margin: 0 0 10px 0;"><strong>Days Ago:</strong> ${isFinite(daysSinceCheck) && daysSinceCheck < 999 ? daysSinceCheck : 'N/A'}</p>
-          <button data-trap-id="${escapeHtml(String(props.trap_id))}" class="popup-view-details" style="
-            background:#3498db;color:white;border:none;padding:8px 15px;border-radius:5px;cursor:pointer;font-size:.9em;">
-            View Details
+      .setPopup(new mapboxgl.Popup({ offset: 28, maxWidth: '300px' }).setHTML(`
+        <div class="popup-card">
+          <div class="popup-header">
+            <span class="popup-status-dot" style="background:${markerColor};box-shadow:0 0 6px ${markerColor}88"></span>
+            <span class="popup-trap-code">Trap ${escapeHtml(props.code || props.trap_id)}</span>
+          </div>
+          <div class="popup-body">
+            <div class="popup-row"><span class="popup-label">Project</span><span class="popup-value">${escapeHtml(project)}</span></div>
+            <div class="popup-row"><span class="popup-label">Trapline</span><span class="popup-value">${escapeHtml(trapline)}</span></div>
+            <div class="popup-row"><span class="popup-label">Type</span><span class="popup-value">${escapeHtml(props.trap_type || '—')}</span></div>
+            <div class="popup-row"><span class="popup-label">Last Check</span><span class="popup-value">${lastDate ? new Date(lastDate).toLocaleDateString('en-NZ') : 'Never'}</span></div>
+            <div class="popup-row"><span class="popup-label">Days Ago</span><span class="popup-value" style="color:${markerColor};font-weight:700">${isFinite(daysSinceCheck) && daysSinceCheck < 999 ? daysSinceCheck : 'N/A'}</span></div>
+          </div>
+          <button data-trap-id="${escapeHtml(String(props.trap_id))}" class="popup-view-details">
+            View Full Details →
           </button>
         </div>`))
       .addTo(STATE.map);  // Add the marker to the map
@@ -2618,30 +2621,31 @@ function showTrapDetails(trapId) {
   // Build and set the modal body HTML.
   // .slice(0, 10) shows at most the 10 most recent check records.
   body.innerHTML = `
-    <div>
-      <p><strong>Project:</strong> ${escapeHtml(project)}</p>
-      <p><strong>Trapline:</strong> ${escapeHtml(trapline)}</p>
-      <p><strong>Type:</strong> ${escapeHtml(props.trap_type || '—')}</p>
-      <p><strong>Installed:</strong> ${props.date_installed ? new Date(props.date_installed).toLocaleDateString('en-NZ') : '—'}</p>
-      <p><strong>Last check:</strong> ${last ? new Date(last.properties.record_date).toLocaleDateString('en-NZ') : 'Never'}</p>
-      <p><strong>Days since check:</strong> ${daysSinceCheck}</p>
+    <div class="modal-detail-grid">
+      <div class="modal-detail-row"><span class="modal-detail-label">Project</span><span class="modal-detail-value">${escapeHtml(project)}</span></div>
+      <div class="modal-detail-row"><span class="modal-detail-label">Trapline</span><span class="modal-detail-value">${escapeHtml(trapline)}</span></div>
+      <div class="modal-detail-row"><span class="modal-detail-label">Type</span><span class="modal-detail-value">${escapeHtml(props.trap_type || '—')}</span></div>
+      <div class="modal-detail-row"><span class="modal-detail-label">Installed</span><span class="modal-detail-value">${props.date_installed ? new Date(props.date_installed).toLocaleDateString('en-NZ') : '—'}</span></div>
+      <div class="modal-detail-row"><span class="modal-detail-label">Last Check</span><span class="modal-detail-value">${last ? new Date(last.properties.record_date).toLocaleDateString('en-NZ') : 'Never'}</span></div>
+      <div class="modal-detail-row"><span class="modal-detail-label">Days Since Check</span><span class="modal-detail-value modal-detail-value--accent">${daysSinceCheck}</span></div>
+    </div>
 
-      <h4>Recent Activity (Last 10 Records)</h4>
-      <div class="records-list">
-        ${trapRecords.slice(0, 10).map(r => `
+    <h4 class="modal-section-title">Recent Activity</h4>
+    <div class="records-list">
+      ${trapRecords.slice(0, 10).map(r => {
+        const caught = r.properties.species_caught && r.properties.species_caught !== 'None';
+        return `
           <div class="record-item">
-            <div class="record-date">${new Date(r.properties.record_date).toLocaleDateString('en-NZ')}</div>
-            <div class="record-details">
-              ${r.properties.species_caught && r.properties.species_caught !== 'None'
-                ? `🎯 Caught: ${escapeHtml(r.properties.species_caught)}`
-                : '✅ Checked - No catch'}
-              ${r.properties.recorded_by ? ` (${escapeHtml(r.properties.recorded_by)})` : ''}
+            <div class="record-item-top">
+              <span class="record-date">${new Date(r.properties.record_date).toLocaleDateString('en-NZ')}</span>
+              <span class="record-catch-badge ${caught ? 'record-catch-badge--caught' : 'record-catch-badge--clear'}">
+                ${caught ? escapeHtml(r.properties.species_caught) : 'No catch'}
+              </span>
             </div>
-            ${r.properties.record_notes
-              ? `<div class="record-notes">📝 ${escapeHtml(r.properties.record_notes)}</div>`
-              : ''}
-          </div>`).join('')}
-      </div>
+            ${r.properties.recorded_by ? `<div class="record-by">by ${escapeHtml(r.properties.recorded_by)}</div>` : ''}
+            ${r.properties.record_notes ? `<div class="record-notes">${escapeHtml(r.properties.record_notes)}</div>` : ''}
+          </div>`;
+      }).join('')}
     </div>
   `;
 

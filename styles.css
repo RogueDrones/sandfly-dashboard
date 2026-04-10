@@ -1058,15 +1058,15 @@ body {
 
 .modal-content {
   background: var(--surface);
-  border: 1px solid var(--border);
-  margin: 5% auto;
+  border: 1px solid var(--border-hover);
+  margin: 4% auto;
   padding: 0;
-  border-radius: 12px;
+  border-radius: 20px;
   width: 90%;
   max-width: 600px;
-  max-height: 80vh;
+  max-height: 85vh;
   overflow: hidden;
-  box-shadow: var(--shadow-lg);
+  box-shadow: 0 24px 64px rgba(0,0,0,0.8);
 }
 
 .modal-header {
@@ -1091,19 +1091,20 @@ body {
 }
 
 .close-btn {
-  background: transparent;
+  background: var(--surface-3);
   border: 1px solid var(--border);
-  color: var(--text-muted);
-  font-size: 1.3em;
+  color: var(--text-secondary);
+  font-size: 1.5em;
+  font-weight: 300;
   cursor: pointer;
   padding: 0;
-  width: 32px;
-  height: 32px;
+  width: 44px;
+  height: 44px;
   display: flex;
   align-items: center;
   justify-content: center;
   border-radius: 50%;
-  transition: color 0.15s ease, border-color 0.15s ease;
+  transition: color 0.15s, border-color 0.15s, background 0.15s, transform 0.15s;
   flex-shrink: 0;
   line-height: 1;
 }
@@ -1111,6 +1112,8 @@ body {
 .close-btn:hover {
   color: var(--danger);
   border-color: var(--danger);
+  background: rgba(248, 113, 113, 0.1);
+  transform: scale(1.08);
 }
 
 .modal-body {
@@ -1150,6 +1153,205 @@ body {
   border-radius: var(--radius-sm);
   margin-top: 5px;
   font-size: 0.875em;
+}
+
+/* ============================================================
+   MAPBOX POPUP OVERRIDES — dark theme
+   ============================================================ */
+.mapboxgl-popup-content {
+  background: var(--surface) !important;
+  border: 1px solid var(--border-hover) !important;
+  border-radius: 16px !important;
+  padding: 0 !important;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.75) !important;
+}
+
+/* The triangular tip pointing to the marker */
+.mapboxgl-popup-tip {
+  border-top-color: var(--surface) !important;
+  border-bottom-color: var(--surface) !important;
+}
+
+/* Mapbox's built-in × close button */
+.mapboxgl-popup-close-button {
+  color: var(--text-muted) !important;
+  font-size: 22px !important;
+  font-weight: 300 !important;
+  padding: 8px 12px !important;
+  border-radius: 0 16px 0 0 !important;
+  background: transparent !important;
+  line-height: 1 !important;
+}
+.mapboxgl-popup-close-button:hover {
+  color: var(--danger) !important;
+  background: rgba(248,113,113,0.08) !important;
+}
+
+/* Popup card layout */
+.popup-card {
+  font-family: 'Inter', system-ui, sans-serif;
+  min-width: 240px;
+}
+
+.popup-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 16px 20px 12px;
+  border-bottom: 1px solid var(--border);
+}
+
+.popup-status-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.popup-trap-code {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: -0.01em;
+}
+
+.popup-body {
+  padding: 12px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.popup-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+}
+
+.popup-label {
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.popup-value {
+  font-size: 0.85rem;
+  color: var(--text-primary);
+  text-align: right;
+  font-weight: 500;
+}
+
+.popup-view-details {
+  display: block;
+  width: calc(100% - 40px);
+  margin: 4px 20px 16px;
+  padding: 10px;
+  background: var(--accent-dim);
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  font-family: inherit;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  letter-spacing: 0.02em;
+  transition: background 0.15s, transform 0.1s;
+  text-align: center;
+}
+
+.popup-view-details:hover  { background: #15803d; }
+.popup-view-details:active { transform: scale(0.97); }
+
+/* Modal detail grid (trap info rows) */
+.modal-detail-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2px;
+  margin-bottom: 24px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.modal-detail-row {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 12px 16px;
+  background: var(--surface-2);
+  border-bottom: 1px solid var(--border);
+}
+
+.modal-detail-row:nth-child(odd)  { border-right: 1px solid var(--border); }
+.modal-detail-row:nth-last-child(-n+2) { border-bottom: none; }
+
+.modal-detail-label {
+  font-size: 0.68rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--text-muted);
+}
+
+.modal-detail-value {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.modal-detail-value--accent {
+  color: var(--accent);
+  font-size: 1.05rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.modal-section-title {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+}
+
+/* Record items in modal */
+.record-item-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+}
+
+.record-catch-badge {
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 20px;
+  letter-spacing: 0.03em;
+}
+
+.record-catch-badge--caught {
+  background: rgba(74, 222, 128, 0.15);
+  color: var(--accent);
+  border: 1px solid rgba(74, 222, 128, 0.3);
+}
+
+.record-catch-badge--clear {
+  background: var(--surface-3);
+  color: var(--text-muted);
+  border: 1px solid var(--border);
+}
+
+.record-by {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  margin-bottom: 4px;
 }
 
 /* ============================================================
