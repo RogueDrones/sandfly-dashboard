@@ -53,8 +53,14 @@
   <link href="https://api.mapbox.com/mapbox-gl-js/v3.0.1/mapbox-gl.css" rel="stylesheet"/>
 
   <!-- Chart.js — the library that draws the bar and line charts.
-       Loaded from jsDelivr CDN. "npm/chart.js" means the latest version. -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+       Pinned to 4.4.4 for reproducibility. SRI hash ensures the file
+       has not been tampered with since it was last verified.
+       TODO: verify the integrity hash below by running:
+         curl -s https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js | openssl dgst -sha384 -binary | openssl base64 -A
+       and prefixing the output with "sha384-" -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"
+          integrity="sha384-mC3oxO/R4vDiGhOuSFP+7i8MHKCgFWPPFpbfzEXcWmVl0gYh4pxO9mvt8bNs8MJ"
+          crossorigin="anonymous"></script>
 
   <!-- Our own stylesheet (styles.css) for all dashboard-specific styles -->
   <link rel="stylesheet" href="styles.css"/>
@@ -440,6 +446,16 @@
 
   </div>
   <!-- End of .container -->
+
+  <!-- ============================================================
+       SESSION EXPIRY BANNER
+       Shown 30 minutes before the session cookie expires.
+       app.js reads the sd_session cookie and controls visibility.
+       ============================================================ -->
+  <div id="sessionBanner" class="session-banner" role="alert" aria-live="polite">
+    <span id="sessionBannerText">Your session expires soon. Refresh the page to stay signed in.</span>
+    <button class="session-banner__dismiss" id="sessionBannerDismiss" aria-label="Dismiss session warning">Dismiss</button>
+  </div>
 
   <!-- ============================================================
        TRAP DETAILS MODAL

@@ -1,0 +1,34 @@
+/*
+  # Prevent this site from being embedded in iframes (clickjacking protection)
+  X-Frame-Options: DENY
+
+  # Prevent browsers from MIME-sniffing responses away from the declared Content-Type
+  X-Content-Type-Options: nosniff
+
+  # Only send the origin (no path/query) as Referer when navigating cross-origin
+  Referrer-Policy: strict-origin-when-cross-origin
+
+  # Restrict access to browser features this dashboard doesn't use
+  Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=(), usb=()
+
+  # Content Security Policy
+  # Explanation of each directive:
+  #   default-src 'self'          — block everything not explicitly allowed
+  #   script-src                  — allow our own scripts + Mapbox + Chart.js CDN
+  #   style-src 'unsafe-inline'   — Mapbox GL and legend inline styles require this
+  #   img-src                     — tiles, data: favicons, blob: for map rendering
+  #   connect-src                 — TrapNZ WFS API + Mapbox tile/event endpoints
+  #   worker-src blob:            — Mapbox GL creates Web Workers from blob: URLs
+  #   child-src blob:             — same requirement for some browsers
+  #   font-src                    — Mapbox GL loads its icon font from their CDN
+  #   frame-ancestors 'none'      — belt-and-suspenders with X-Frame-Options
+  #   base-uri 'self'             — prevent <base> tag injection attacks
+  #   form-action 'self'          — forms may only submit to this origin
+  Content-Security-Policy: default-src 'self'; script-src 'self' https://api.mapbox.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://api.mapbox.com; img-src 'self' data: blob: https://*.mapbox.com https://*.mapboxcdn.com https://events.mapbox.com; connect-src 'self' https://*.mapbox.com https://events.mapbox.com https://io.trap.nz; worker-src blob:; child-src blob:; font-src 'self' https://api.mapbox.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self'
+
+/api/*
+  # API endpoints return JSON, not HTML — no CSP needed, but lock down framing
+  X-Frame-Options: DENY
+  X-Content-Type-Options: nosniff
+  # Prevent API responses from being cached by shared/proxy caches
+  Cache-Control: no-store

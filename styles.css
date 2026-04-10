@@ -1275,6 +1275,37 @@ body {
     height: 100%;
     background-color: rgba(0, 0, 0, 0.6);  /* 60% opaque black overlay */
     backdrop-filter: blur(5px);             /* Blurs the dashboard behind the modal */
+    overflow-y: auto;          /* Allow scrolling the overlay itself on small screens */
+}
+
+/* Fade-in animation applied when the modal becomes visible */
+.modal.modal--open {
+    animation: modalFadeIn 0.25s ease-out;
+}
+
+@keyframes modalFadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+/* Slide-in for the modal panel itself */
+.modal.modal--open .modal-content {
+    animation: modalSlideIn 0.25s ease-out;
+}
+
+@keyframes modalSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-20px) scale(0.97);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
 }
 
 /* The white modal panel itself. margin: 5% auto centres it
@@ -1312,24 +1343,27 @@ body {
    border-radius: 50% makes it a circle.
    Clicking this button hides the modal (handled in app.js). */
 .close-btn {
-    background: none;
-    border: none;
+    background: rgba(255, 255, 255, 0.15);
+    border: 2px solid rgba(255, 255, 255, 0.4);
     color: white;
-    font-size: 2em;
+    font-size: 1.5em;
     cursor: pointer;
     padding: 0;
-    width: 30px;
-    height: 30px;
+    width: 36px;
+    height: 36px;
     display: flex;
     align-items: center;
     justify-content: center;
     border-radius: 50%;   /* Circular button */
-    transition: background 0.3s ease;
+    transition: background 0.2s ease, transform 0.15s ease;
+    flex-shrink: 0;
+    line-height: 1;
 }
 
-/* Shows a subtle white circle behind the × on hover */
+/* Brighter circle and slight grow on hover */
 .close-btn:hover {
-    background: rgba(255, 255, 255, 0.2);
+    background: rgba(255, 255, 255, 0.35);
+    transform: scale(1.1);
 }
 
 /* The scrollable body of the modal containing trap details
@@ -1393,6 +1427,119 @@ body {
 }
 
 /* ============================================================
+   SKELETON LOADING STATES
+   Animated shimmer placeholders that replace plain loading text
+   while data is being fetched. The shimmer animation creates a
+   light sweep effect from left to right across the grey bar.
+   ============================================================ */
+
+/* A single skeleton line — a rounded grey bar */
+.skeleton-line {
+    height: 14px;
+    background: #e0e0e0;
+    border-radius: 6px;
+    margin: 8px 0;
+    overflow: hidden;
+    position: relative;
+}
+
+/* A wider skeleton line for headings */
+.skeleton-line.skeleton-line--wide {
+    width: 85%;
+}
+
+/* A narrower skeleton line for secondary text */
+.skeleton-line.skeleton-line--narrow {
+    width: 55%;
+}
+
+/* A short skeleton line for labels or badges */
+.skeleton-line.skeleton-line--short {
+    width: 35%;
+    height: 10px;
+}
+
+/* The shimmer overlay — an animated gradient that sweeps across */
+.skeleton-line::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 60%;
+    height: 100%;
+    background: linear-gradient(
+        90deg,
+        transparent 0%,
+        rgba(255, 255, 255, 0.6) 50%,
+        transparent 100%
+    );
+    animation: skeleton-shimmer 1.4s infinite ease-in-out;
+}
+
+/* Wrapper used to group multiple skeleton lines into a block */
+.skeleton-pulse {
+    padding: 12px 4px;
+}
+
+/* Stagger shimmer timing across skeleton lines inside a block */
+.skeleton-pulse .skeleton-line:nth-child(2)::after { animation-delay: 0.1s; }
+.skeleton-pulse .skeleton-line:nth-child(3)::after { animation-delay: 0.2s; }
+.skeleton-pulse .skeleton-line:nth-child(4)::after { animation-delay: 0.3s; }
+.skeleton-pulse .skeleton-line:nth-child(5)::after { animation-delay: 0.4s; }
+
+@keyframes skeleton-shimmer {
+    0%   { left: -100%; }
+    100% { left: 160%; }
+}
+
+/* ============================================================
+   SESSION EXPIRY BANNER
+   A dismissible amber warning bar that appears at the top of
+   the page when the session is about to expire.
+   ============================================================ */
+
+.session-banner {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 2000;
+    background: linear-gradient(135deg, #f39c12, #e67e22);
+    color: #fff;
+    padding: 12px 20px;
+    text-align: center;
+    font-size: 0.95em;
+    font-weight: 600;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    animation: fadeIn 0.4s ease-out;
+}
+
+.session-banner.session-banner--visible {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+}
+
+.session-banner__dismiss {
+    background: rgba(255,255,255,0.25);
+    border: 1px solid rgba(255,255,255,0.5);
+    color: #fff;
+    padding: 4px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.9em;
+    font-weight: 600;
+    transition: background 0.2s ease;
+    flex-shrink: 0;
+}
+
+.session-banner__dismiss:hover {
+    background: rgba(255,255,255,0.4);
+}
+
+/* ============================================================
    RESPONSIVE DESIGN
    These @media rules adjust the layout for smaller screens.
    @media (max-width: Xpx) means "apply these rules only when
@@ -1423,14 +1570,40 @@ body {
         font-size: 1.5em;
     }
 
-    /* Allow the header top row to wrap onto multiple lines */
+    /* Stack header vertically: project info, stats, actions each on own row */
     .header-top {
-        flex-wrap: wrap;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 12px;
     }
 
-    /* Allow stat cards to wrap onto two rows on small screens */
+    /* Project info takes full width */
+    .project-info {
+        white-space: normal;
+    }
+
+    /* Stat cards wrap to two rows on mobile */
     .header-stats {
         flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    /* Each stat card takes roughly half the row on mobile */
+    .stat-card {
+        flex: 1 1 calc(50% - 8px);
+        min-width: 0;
+    }
+
+    /* Action buttons row takes full width and stacks side-by-side */
+    .header-actions {
+        width: 100%;
+        justify-content: stretch;
+    }
+
+    .header-actions .refresh-btn,
+    .header-actions .logout-btn {
+        flex: 1;
+        text-align: center;
     }
 
     /* Stack filter controls vertically on small screens */
@@ -1461,14 +1634,25 @@ body {
         align-items: flex-start;
     }
 
-    /* Reduce the map height on small screens to leave room for other content */
+    /* Reduce the map height on small screens; minimum 300px */
     .map-container {
-        height: 600px;
+        height: max(300px, 50vw);
     }
 
     /* Force analytics cards into a single column on mobile */
     .analytics-grid {
         grid-template-columns: 1fr;
+    }
+
+    /* Stack the reports layout panels vertically on mobile */
+    .reports-layout {
+        grid-template-columns: 1fr;
+    }
+
+    /* Make wide/half analytics cards take full column on mobile */
+    .analytics-card--wide,
+    .analytics-card--half {
+        grid-column: 1 / -1;
     }
 
     /* Stack the status bar items vertically and centre them */
@@ -1499,6 +1683,65 @@ body {
     /* Make the export chooser dropdown full width on mobile */
     .export-chooser {
         width: 100%;
+    }
+}
+
+/* ---- Very small screens (max 480px) ---- */
+@media (max-width: 480px) {
+    /* Tighter container padding */
+    .container {
+        padding: 10px;
+    }
+
+    /* Smaller h1 for very narrow phones */
+    .project-info h1 {
+        font-size: 1.2em;
+    }
+
+    /* Reduce subtitle size */
+    .project-subtitle {
+        font-size: 0.85em;
+    }
+
+    /* Stat cards: each one full-width on very small screens */
+    .stat-card {
+        flex: 1 1 100%;
+    }
+
+    .stat-number {
+        font-size: 1.4em;
+    }
+
+    /* Tighter padding on analytics cards */
+    .analytics-card {
+        padding: 15px;
+    }
+
+    /* Smaller section headings */
+    .analytics-card h3 {
+        font-size: 1.1em;
+        margin-bottom: 12px;
+    }
+
+    /* Map at least 300px on tiny screens */
+    .map-container {
+        height: 300px;
+    }
+
+    /* Smaller report panels */
+    .report-panel {
+        padding: 15px;
+    }
+
+    /* Reduce modal margin on very small screens */
+    .modal-content {
+        width: 98%;
+        margin: 5% auto;
+    }
+
+    /* Tighter header */
+    .dashboard-header {
+        padding: 15px;
     }
 }
 

@@ -282,6 +282,70 @@ function escapeHtml(s) {
 }
 
 /* ============================================================
+   SESSION EXPIRY WARNING
+   Reads the sd_session cookie, decodes the base64 payload to
+   extract the exp (Unix timestamp), and shows a dismissible
+   amber banner 30 minutes before the session expires.
+   ============================================================ */
+function initSessionExpiryWarning() {
+  const WARN_BEFORE_MS = 30 * 60 * 1000; // 30 minutes in milliseconds
+  const CHECK_INTERVAL_MS = 60 * 1000;   // Check every 60 seconds
+
+  function getSessionExp() {
+    // Read the sd_session cookie value
+    const match = document.cookie.split(';').map(c => c.trim()).find(c => c.startsWith('sd_session='));
+    if (!match) return null;
+    const raw = match.slice('sd_session='.length);
+    // Cookie format: base64data.signature — we only need the first part
+    const b64 = raw.split('.')[0];
+    if (!b64) return null;
+    try {
+      // atob decodes base64; pad if necessary
+      const padded = b64 + '=='.slice(0, (4 - b64.length % 4) % 4);
+      const json = atob(padded);
+      const payload = JSON.parse(json);
+      return typeof payload.exp === 'number' ? payload.exp : null;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  function checkAndShowBanner() {
+    const exp = getSessionExp();
+    if (!exp) return;
+    const nowMs = Date.now();
+    const expMs = exp * 1000; // Convert Unix seconds to ms
+    const msUntilExpiry = expMs - nowMs;
+
+    const banner = document.getElementById('sessionBanner');
+    const text   = document.getElementById('sessionBannerText');
+    if (!banner || !text) return;
+
+    if (msUntilExpiry > 0 && msUntilExpiry <= WARN_BEFORE_MS) {
+      const minsLeft = Math.ceil(msUntilExpiry / 60000);
+      text.textContent = `Your session expires in ${minsLeft} minute${minsLeft !== 1 ? 's' : ''}. Refresh the page to stay signed in.`;
+      banner.classList.add('session-banner--visible');
+    } else if (msUntilExpiry <= 0) {
+      text.textContent = 'Your session has expired. Please refresh the page to sign in again.';
+      banner.classList.add('session-banner--visible');
+    }
+  }
+
+  // Dismiss button hides the banner for this page visit
+  const dismissBtn = document.getElementById('sessionBannerDismiss');
+  if (dismissBtn) {
+    dismissBtn.addEventListener('click', () => {
+      const banner = document.getElementById('sessionBanner');
+      if (banner) banner.classList.remove('session-banner--visible');
+    });
+  }
+
+  // Check immediately, then on an interval
+  checkAndShowBanner();
+  setInterval(checkAndShowBanner, CHECK_INTERVAL_MS);
+}
+
+/* ============================================================
    BOOTSTRAP — Application Startup
    This code runs once when the browser has fully parsed the HTML.
    DOMContentLoaded fires before images and stylesheets finish
@@ -292,6 +356,30 @@ document.addEventListener('DOMContentLoaded', () => {
   // Guard against running twice (belt-and-suspenders safety check)
   if (STATE.initialized) return;
   STATE.initialized = true;
+
+  // -- Replace static loading text with animated skeleton placeholders --
+  const skeletonHTML = `<div class="skeleton-pulse">
+    <div class="skeleton-line skeleton-line--wide"></div>
+    <div class="skeleton-line skeleton-line--narrow"></div>
+    <div class="skeleton-line skeleton-line--wide"></div>
+    <div class="skeleton-line skeleton-line--narrow"></div>
+    <div class="skeleton-line skeleton-line--short"></div>
+  </div>`;
+  [
+    'topPerformers12mo', 'worstPerformers12mo', 'species12mo',
+    'checkActivity12mo', 'topPerformersAllTime', 'worstPerformersAllTime',
+    'speciesAllTime', 'trapTypePerf', 'lastNotes', 'overdueTraps',
+    'traplineSummary', 'checkRecordLog'
+  ].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) {
+      const placeholder = el.querySelector('.loading');
+      if (placeholder) placeholder.outerHTML = skeletonHTML;
+    }
+  });
+
+  // -- Session expiry warning banner --
+  initSessionExpiryWarning();
 
   // -- Check that Mapbox loaded correctly --
   // If the Mapbox script in index.html failed to load, mapboxgl
@@ -363,8 +451,28 @@ function setupEventListeners() {
   const closeModal = document.getElementById('closeModal');
   if (closeModal) closeModal.addEventListener('click', () => {
     const m = document.getElementById('trapModal');
-    if (m) m.style.display = 'none';
+    if (m) { m.style.display = 'none'; m.classList.remove('modal--open'); }
   });
+
+  // Also close modal when clicking the backdrop (outside the panel)
+  const trapModal = document.getElementById('trapModal');
+  if (trapModal) trapModal.addEventListener('click', (e) => {
+    if (e.target === trapModal) { trapModal.style.display = 'none'; trapModal.classList.remove('modal--open'); }
+  });
+
+  // -- Map popup "View Details" buttons --
+  // Mapbox popups are injected into the DOM dynamically, so we use
+  // event delegation on the map container rather than attaching
+  // listeners directly to the buttons (which don't exist yet at setup time).
+  // The trap ID is stored in a data-trap-id attribute (HTML-escaped) to
+  // avoid injecting it into an onclick attribute string.
+  const mapContainer = document.getElementById('map');
+  if (mapContainer) {
+    mapContainer.addEventListener('click', e => {
+      const btn = e.target.closest('.popup-view-details');
+      if (btn) showTrapDetails(btn.dataset.trapId);
+    });
+  }
 
   // -- Check log period filter --
   // When the user changes the "Last 7 days / 30 days / etc." dropdown,
@@ -949,7 +1057,7 @@ function updateMapData() {
           <p style="margin: 0 0 5px 0;"><strong>Installed:</strong> ${props.date_installed ? new Date(props.date_installed).toLocaleDateString('en-NZ') : '—'}</p>
           <p style="margin: 0 0 5px 0;"><strong>Last Check:</strong> ${lastDate ? new Date(lastDate).toLocaleDateString('en-NZ') : 'Never'}</p>
           <p style="margin: 0 0 10px 0;"><strong>Days Ago:</strong> ${isFinite(daysSinceCheck) && daysSinceCheck < 999 ? daysSinceCheck : 'N/A'}</p>
-          <button onclick="showTrapDetails('${String(props.trap_id).replace(/'/g, "\\'")}')" style="
+          <button data-trap-id="${escapeHtml(String(props.trap_id))}" class="popup-view-details" style="
             background:#3498db;color:white;border:none;padding:8px 15px;border-radius:5px;cursor:pointer;font-size:.9em;">
             View Details
           </button>
@@ -1868,7 +1976,13 @@ function computeLastNotesFromRecords() {
 async function updateLastNotesPanel() {
   // Show a loading placeholder while we compute
   const container = document.getElementById('lastNotes');
-  if (container) container.innerHTML = `<div class="loading">Preparing notes…</div>`;
+  if (container) container.innerHTML = `<div class="skeleton-pulse">
+    <div class="skeleton-line skeleton-line--wide"></div>
+    <div class="skeleton-line skeleton-line--narrow"></div>
+    <div class="skeleton-line skeleton-line--wide"></div>
+    <div class="skeleton-line skeleton-line--narrow"></div>
+    <div class="skeleton-line skeleton-line--short"></div>
+  </div>`;
 
   // Compute the full notes list from the current records
   const items = computeLastNotesFromRecords();
@@ -2531,8 +2645,11 @@ function showTrapDetails(trapId) {
     </div>
   `;
 
-  // Make the modal visible. The CSS for .modal has display: none by default.
+  // Make the modal visible with fade-in animation
   modal.style.display = 'block';
+  // Trigger reflow so the animation fires even if the modal was already displayed
+  void modal.offsetWidth;
+  modal.classList.add('modal--open');
 }
 
 

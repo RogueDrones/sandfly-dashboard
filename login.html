@@ -275,8 +275,12 @@
     // it added ?next=/that/page to the URL. We read it so we can
     // send the user back there after a successful login.
     // If there's no ?next= parameter, default to '/' (the homepage/dashboard).
-    const params   = new URLSearchParams(window.location.search);
-    const nextPath = params.get('next') || '/';
+    const params = new URLSearchParams(window.location.search);
+    const rawNext = params.get('next') || '/';
+    // Validate: only allow same-origin relative paths (must start with /
+    // but NOT // which would be a protocol-relative external URL).
+    // This prevents open-redirect attacks like ?next=https://evil.com
+    const nextPath = (rawNext.startsWith('/') && !rawNext.startsWith('//') && !rawNext.includes(':')) ? rawNext : '/';
 
     // -- Subsection: Error display helper functions --
 
