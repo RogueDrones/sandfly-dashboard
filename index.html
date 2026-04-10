@@ -62,6 +62,11 @@
           integrity="sha384-NrKB+u6Ts6AtkIhwPixiKTzgSKNblyhlk0Sohlgar9UHUBzai/sgnNNWWd291xqt"
           crossorigin="anonymous"></script>
 
+  <!-- Google Fonts: Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
   <!-- Our own stylesheet (styles.css) for all dashboard-specific styles -->
   <link rel="stylesheet" href="styles.css"/>
 
@@ -91,7 +96,7 @@
 
         <!-- Project title and subtitle, top-left of the header -->
         <div class="project-info">
-          <h1>🎯 Trapping Dashboard</h1>
+          <h1>Trapping Dashboard</h1>
           <p class="project-subtitle">Real-time Monitoring</p>
         </div>
 
@@ -138,7 +143,7 @@
       <div class="filter-controls">
         <!-- Project filter: "All Projects" or a specific project name -->
         <div class="filter-group">
-          <label for="projectFilter">📁 Project:</label>
+          <label for="projectFilter">Project</label>
           <select id="projectFilter" class="filter-select">
             <option value="all">All Projects</option>
             <!-- Additional options are added dynamically by app.js -->
@@ -146,7 +151,7 @@
         </div>
         <!-- Trapline filter: "All Traplines" or a specific trapline name -->
         <div class="filter-group">
-          <label for="traplineFilter">📍 Trapline:</label>
+          <label for="traplineFilter">Trapline</label>
           <select id="traplineFilter" class="filter-select">
             <option value="all">All Traplines</option>
             <!-- Additional options are added dynamically by app.js -->
@@ -184,12 +189,12 @@
       <section class="map-section">
         <!-- Section heading row with title and map control buttons -->
         <div class="section-header">
-          <h2>🗺️ Live Trap Locations</h2>
+          <h2>Live Trap Locations</h2>
           <div class="map-controls">
             <!-- Zooms the map to fit all currently visible trap pins -->
-            <button id="fitBounds" class="map-btn">🗺️ Fit All</button>
+            <button id="fitBounds" class="map-btn">Fit All</button>
             <!-- Toggles between satellite imagery and street map view -->
-            <button id="toggleSatellite" class="map-btn">🛰️ Satellite</button>
+            <button id="toggleSatellite" class="map-btn">Satellite</button>
           </div>
         </div>
 
@@ -236,7 +241,7 @@
              by Chart.js. The width/height are initial values only —
              app.js resizes the canvas to fit the card. -->
         <section class="analytics-card analytics-card--wide">
-          <h3>📊 Monthly Catch Trends (last 12 months)</h3>
+          <h3>Monthly Catch Trends (last 12 months)</h3>
           <canvas id="catchTrendsChart" width="400" height="220"></canvas>
         </section>
 
@@ -245,7 +250,7 @@
              Useful for identifying which traps in your network are
              catching the most pests. app.js fills the div with HTML. -->
         <section class="analytics-card">
-          <h3>🏆 Top Traps — 12 Months</h3>
+          <h3>Top Traps — 12 Months</h3>
           <div class="top-performers" id="topPerformers12mo">
             <div class="loading">Analyzing trap performance...</div>
           </div>
@@ -255,7 +260,7 @@
              the lowest catch rates. May indicate traps that need
              maintenance, repositioning, or different bait. -->
         <section class="analytics-card">
-          <h3>🚩 Worst Traps — 12 Months</h3>
+          <h3>Worst Traps — 12 Months</h3>
           <div class="top-performers" id="worstPerformers12mo">
             <div class="loading">Scanning for underperformers...</div>
           </div>
@@ -265,7 +270,7 @@
              caught in the last 12 months with a proportional bar
              showing how common each species is relative to the others. -->
         <section class="analytics-card">
-          <h3>🐀 Species Caught — 12 Months</h3>
+          <h3>Species Caught — 12 Months</h3>
           <div class="top-performers" id="species12mo">
             <div class="loading">Tallying species...</div>
           </div>
@@ -276,7 +281,7 @@
              percentage of traps visited, average checks per trap,
              and the busiest month. -->
         <section class="analytics-card">
-          <h3>✅ Check Activity — 12 Months</h3>
+          <h3>Check Activity — 12 Months</h3>
           <div id="checkActivity12mo">
             <div class="loading">Calculating activity...</div>
           </div>
@@ -286,14 +291,14 @@
              chart but grouped by calendar year so you can see
              multi-year trends. Goes back as far as TrapNZ records exist. -->
         <section class="analytics-card analytics-card--wide">
-          <h3>📊 Annual Catch Trends (all years)</h3>
+          <h3>Annual Catch Trends (all years)</h3>
           <canvas id="annualCatchChart" width="400" height="220"></canvas>
         </section>
 
         <!-- All-time Top Performers — same as the 12-month version but
              across ALL records ever, giving the lifetime leaderboard. -->
         <section class="analytics-card">
-          <h3>🏆 Top Traps — All Time</h3>
+          <h3>Top Traps — All Time</h3>
           <div class="top-performers" id="topPerformersAllTime">
             <div class="loading">Analyzing trap performance...</div>
           </div>
@@ -302,7 +307,7 @@
         <!-- All-time Worst Performers — traps with the lowest catch
              rates across all recorded history. -->
         <section class="analytics-card">
-          <h3>🚩 Underperforming — All Time</h3>
+          <h3>Underperforming — All Time</h3>
           <div class="top-performers" id="worstPerformersAllTime">
             <div class="loading">Scanning for underperformers...</div>
           </div>
@@ -311,7 +316,7 @@
         <!-- Species Breakdown (all time) — like the 12-month species
              list but including every catch ever recorded. -->
         <section class="analytics-card">
-          <h3>🐀 Species Caught — All Time</h3>
+          <h3>Species Caught — All Time</h3>
           <div class="top-performers" id="speciesAllTime">
             <div class="loading">Tallying species...</div>
           </div>
@@ -321,7 +326,7 @@
              (e.g. DOC 200, Timms, Goodnature) by their catch rates.
              Helps you decide which trap design works best. -->
         <section class="analytics-card">
-          <h3>🪤 Trap Type Performance</h3>
+          <h3>Trap Type Performance</h3>
           <div class="top-performers" id="trapTypePerf">
             <div class="loading">Comparing trap types...</div>
           </div>
@@ -332,7 +337,7 @@
              search box, sort controls, page size selector, and a
              CSV export button. Spans two grid columns (half width). -->
         <section class="analytics-card analytics-card--half">
-          <h3>📝 Last Notes (per trap)</h3>
+          <h3>Last Notes (per trap)</h3>
           <!-- app.js renders the search controls and note list into this div -->
           <div id="lastNotes">
             <div class="loading">Preparing notes…</div>
@@ -346,7 +351,7 @@
         <section class="analytics-card analytics-card--half">
           <!-- The &gt; is an HTML entity for the > character. HTML would
                interpret a bare > as the end of a tag, so we escape it. -->
-          <h3>⚠️ Overdue Traps (&gt;14 days)</h3>
+          <h3>Overdue Traps (&gt;14 days)</h3>
           <div class="top-performers" id="overdueTraps">
             <div class="loading">Checking overdue traps...</div>
           </div>
@@ -370,7 +375,7 @@
                catch rate, overdue count, and last check date.
                Clicking a row filters the Check Record Log to that trapline. -->
           <div class="report-panel">
-            <h3>📍 Trapline Summary</h3>
+            <h3>Trapline Summary</h3>
             <!-- app.js renders the table and pagination buttons here -->
             <div id="traplineSummary">
               <div class="loading">Loading traplines...</div>
@@ -384,7 +389,7 @@
                side by side. -->
           <div class="report-panel">
             <div class="log-header">
-              <h3>📋 Check Record Log</h3>
+              <h3>Check Record Log</h3>
 
               <!-- Controls for the check record log: period filter,
                    trapline filter, and export button. All three trigger

@@ -42,156 +42,157 @@
        an inline SVG that just displays the target emoji. -->
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎯</text></svg>">
 
-  <!-- ============================================================
-       Embedded CSS — styles for the login page only.
-       We put the CSS here (rather than in styles.css) because this
-       page is intentionally minimal and self-contained. Having the
-       styles inline means one fewer network request to load.
-       ============================================================ -->
+  <!-- Google Fonts: Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
   <style>
-    /* Reset box model: every element's width/height includes its
-       padding and border (not just the content). This prevents
-       elements from accidentally overflowing their containers. */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-    /* The body takes up the full screen height and uses flexbox
-       to centre the login card both horizontally and vertically.
-       The purple-to-violet gradient background matches the main
-       dashboard for a consistent look. */
-    body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      min-height: 100vh;    /* Fill the whole screen vertically */
-      display: flex;
-      align-items: center;      /* Centre vertically */
-      justify-content: center;  /* Centre horizontally */
-      padding: 20px;            /* Small gap on very small screens */
+    :root {
+      --bg:           #0d1f13;
+      --surface:      #132019;
+      --surface-2:    #1a2d22;
+      --border:       rgba(74, 222, 128, 0.12);
+      --border-hover: rgba(74, 222, 128, 0.28);
+      --accent:       #4ade80;
+      --accent-dim:   #16a34a;
+      --accent-glow:  rgba(74, 222, 128, 0.15);
+      --text-primary:   #e8f5e9;
+      --text-secondary: #81c784;
+      --text-muted:     #4a7c59;
+      --danger:  #f87171;
+      --shadow-lg: 0 8px 32px rgba(0,0,0,0.6);
     }
 
-    /* The white card that contains the login form. max-width 400px
-       keeps it from being too wide on large screens. The semi-transparent
-       background and backdrop-filter give a frosted-glass effect. */
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      background: var(--bg);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      -webkit-font-smoothing: antialiased;
+    }
+
     .login-card {
-      background: rgba(255, 255, 255, 0.97);
-      border-radius: 18px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
       padding: 40px 44px;
       width: 100%;
       max-width: 400px;
-      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);  /* Deep shadow for depth */
-      backdrop-filter: blur(10px);  /* Blurs the gradient behind the card */
+      box-shadow: var(--shadow-lg);
     }
 
-    /* The logo area at the top of the card — emoji icon + title + subtitle */
     .logo {
       text-align: center;
-      margin-bottom: 28px;
+      margin-bottom: 32px;
     }
 
-    /* The large emoji icon displayed above the title */
-    .logo-icon {
-      font-size: 3rem;
-      display: block;      /* Makes the span take its own line */
-      margin-bottom: 8px;
+    .logo-wordmark {
+      display: inline-block;
+      font-size: 1.1rem;
+      font-weight: 800;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--accent);
+      background: var(--accent-glow);
+      border: 1px solid var(--border);
+      padding: 6px 14px;
+      border-radius: 6px;
+      margin-bottom: 14px;
     }
 
-    /* The main heading inside the logo area */
     .logo h1 {
-      font-size: 1.5rem;
-      color: #2c3e50;
+      font-size: 1.4rem;
+      color: var(--text-primary);
       font-weight: 700;
-      margin-bottom: 4px;
+      margin-bottom: 5px;
+      letter-spacing: -0.01em;
     }
 
-    /* The smaller subtitle text below the heading */
     .logo p {
-      color: #7f8c8d;  /* Grey — visually less important */
-      font-size: 0.9rem;
+      color: var(--text-muted);
+      font-size: 0.875rem;
+      font-weight: 500;
     }
 
-    /* Each label + input pair is wrapped in a .form-group for consistent spacing */
     .form-group {
-      margin-bottom: 18px;
+      margin-bottom: 16px;
     }
 
-    /* The text labels above each input field (EMAIL, PASSWORD) */
     label {
-      display: block;           /* Takes its own line above the input */
-      font-size: 0.85rem;
+      display: block;
+      font-size: 0.72rem;
       font-weight: 600;
-      color: #555;
+      color: var(--text-muted);
       margin-bottom: 6px;
-      text-transform: uppercase;   /* Makes labels all-caps */
-      letter-spacing: 0.04em;      /* Slight spacing between letters for readability */
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
     }
 
-    /* The text input fields for email and password */
     input {
-      width: 100%;              /* Fill the full card width */
-      padding: 12px 14px;
-      border: 2px solid #e0e0e0;
-      border-radius: 10px;
-      font-size: 1rem;
-      font-family: inherit;     /* Use the same font as the rest of the page */
-      color: #2c3e50;
-      transition: border-color 0.2s, box-shadow 0.2s;  /* Smooth focus animation */
-      background: #fafafa;      /* Very light grey background */
+      width: 100%;
+      padding: 11px 13px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 0.95rem;
+      font-family: inherit;
+      color: var(--text-primary);
+      background: var(--surface-2);
+      transition: border-color 0.15s, box-shadow 0.15s;
     }
 
-    /* When the user clicks into an input field, highlight it with
-       a blue border and a soft glow ring to show it is active */
+    input::placeholder {
+      color: var(--text-muted);
+    }
+
     input:focus {
-      outline: none;            /* Remove default browser outline */
-      border-color: #667eea;    /* Purple highlight matching the page background */
-      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.15);  /* Soft glow around the field */
-      background: #fff;         /* Switch to pure white when focused */
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-glow);
     }
 
-    /* The main "Sign In" submit button — takes the full card width */
     .btn-login {
       width: 100%;
-      padding: 13px;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);  /* Matches page bg */
+      padding: 12px;
+      background: var(--accent-dim);
       color: #fff;
       border: none;
-      border-radius: 10px;
-      font-size: 1rem;
+      border-radius: 8px;
+      font-size: 0.95rem;
       font-weight: 700;
       font-family: inherit;
       cursor: pointer;
       margin-top: 8px;
-      transition: opacity 0.2s, transform 0.1s;
       letter-spacing: 0.02em;
+      transition: background 0.15s, transform 0.1s;
     }
 
-    /* Slight transparency on hover — gives a pressed/clickable feel */
-    .btn-login:hover  { opacity: 0.92; }
-
-    /* Slightly shrinks the button while it's being clicked */
+    .btn-login:hover  { background: #15803d; }
     .btn-login:active { transform: scale(0.98); }
 
-    /* When the button is disabled (while sign-in is in progress),
-       make it look greyed out and prevent clicking */
     .btn-login:disabled {
-      opacity: 0.6;
+      opacity: 0.5;
       cursor: not-allowed;
-      transform: none;  /* Don't animate a disabled button */
+      transform: none;
     }
 
-    /* The error message box that appears below the button when login fails.
-       It is hidden by default using display: none. */
     .error-msg {
-      display: none;        /* Hidden until .visible class is added by JavaScript */
-      margin-top: 16px;
-      padding: 11px 14px;
-      background: #fdecea;  /* Light red background */
-      border: 1px solid #f5c6c2;
-      border-radius: 8px;
-      color: #c0392b;       /* Dark red text */
-      font-size: 0.9rem;
+      display: none;
+      margin-top: 14px;
+      padding: 10px 13px;
+      background: rgba(248, 113, 113, 0.1);
+      border: 1px solid rgba(248, 113, 113, 0.3);
+      border-radius: 7px;
+      color: var(--danger);
+      font-size: 0.875rem;
       text-align: center;
     }
 
-    /* JavaScript adds this class to make the error visible */
     .error-msg.visible { display: block; }
   </style>
 </head>
@@ -204,7 +205,7 @@
 
     <!-- Logo area: emoji icon, title, and subtitle -->
     <div class="logo">
-      <span class="logo-icon">🎯</span>
+      <span class="logo-wordmark">Sandfly</span>
       <h1>Trapping Dashboard</h1>
       <p>Sign in to continue</p>
     </div>
