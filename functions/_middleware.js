@@ -41,7 +41,7 @@ const COOKIE_NAME = 'sd_session';
 // These paths are allowed through WITHOUT a valid session.
 // We need /login and /api/login to be public, otherwise
 // users can never get to the login page in the first place!
-const PUBLIC_PATHS = ['/login', '/login.html', '/api/login'];
+const PUBLIC_PATHS = ['/login', '/login.html', '/login.js', '/api/login'];
 
 /* ============================================================
    CRYPTO HELPERS
